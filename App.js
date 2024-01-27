@@ -1,6 +1,6 @@
 import React from 'react'
-import Home from './tabs/Home'
+import Movie from './tabs/Movie'
 
 export default function App() {
-    return <Home />
+    return <Movie />
 }
