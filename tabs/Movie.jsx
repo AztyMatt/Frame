@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react'
-import { StatusBar } from 'expo-status-bar'
-import { View, StyleSheet, Text, Image, SafeAreaView, TouchableOpacity, Linking } from 'react-native'
+import { StatusBar } from 'expo-status-bar' // Needed ?
+import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
 import CustomText from '../components/tags/CustomText.jsx'
 import { LinearGradient } from 'expo-linear-gradient'
+import Figures from '../components/Figures.jsx'
 
 import { api } from '../services/api.js'
 
-export default function Movie() {
+const Movie = () => {
     const [apiResult, setApiResult] = useState(null)
-    const [imageError, setImageError] = useState(false)
+
+    const [trailer, setTrailer] = useState([])
+    const [filteredFigures, setfilteredFigures] = useState([])
+    const [director, setDirector] = useState([])
+    const [figuresVisible, setfiguresVisible] = useState(6)
+    const [selectedTab, setSelectedTab] = useState("cast")
 
     const fetchData = async () => {
         try {
-            const result = await api('/movie/787699?append_to_response=videos%2Crelease_dates&language=en-US')
+            const result = await api('/movie/787699?append_to_response=credits%2Cvideos&language=en-US') //%2Crelease_dates
             setApiResult(result)
         } catch (error) {
             console.error('Erreur lors de l\'appel à api:', error.message)
         }
     }
 
-    const handleImageError = () => {
-        setImageError(true)
-    }
-
-    const formatReleaseDate = (date) => {
+    const formatReleaseDate = () => {
         return new Date(apiResult.release_date).getFullYear()
     }
 
@@ -37,37 +39,84 @@ export default function Movie() {
         return `${hoursFormat}h${minutesFormat}`
     }
 
-    const handleLinkPress = (link) => {
-        Linking.openURL(`https://www.youtube.com/watch?v=${ link }`);
+    const handleLinkPress = () => {
+        {trailer ? (
+            trailer.key
+        ) : (
+            ''
+        )}
+        Linking.openURL(`https://www.youtube.com/watch?v=${ trailer.key }`)
+    }
+
+    // To toggle between 5actors or all of them
+    // const handleToggleImages = () => {
+    //     if (figuresVisible === filteredFigures.length) { // Needs to be edited now that filteredFigures contains an object
+    //         setfiguresVisible(5)
+    //     } else {
+    //         setfiguresVisible(filteredFigures.length)
+    //     }
+    // }
+
+    const handleToggleTab = (tab) => {
+        setSelectedTab(tab)
+    }
+
+    const whichTabBtn = (tab) => {
+        return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
     
     useEffect(() => {
         fetchData()
-    }, [])
+
+        if (apiResult) {
+            const trailer = apiResult.videos.results.find(
+                video => video.name === "Official Trailer"
+            )
+            setTrailer(trailer)
+
+            const cast = apiResult.credits.cast.filter(
+                person => person.known_for_department === "Acting"
+            )
+
+            // const crew = apiResult.credits.crew.filter(
+            //     person => person.known_for_department === "Crew"
+            // )
+
+            const crew = apiResult.credits.crew
+
+            setfilteredFigures({ cast, crew })
+
+            const director = apiResult.credits.crew.find(
+                person => person.job === "Director"
+            )
+            setDirector(director)
+        }
+    }, [apiResult])
 
     return (
-            <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
+            <ScrollView>
+                {/* <StatusBar backgroundColor="blue" barStyle="light-content"/> */}
                 {apiResult ? (
                     <View>
-                        <View style={styles.linearGradientContainer}>
-                            <LinearGradient colors={['#101010', 'transparent']}>
-                                <View style={styles.linearGradient}></View>
-                            </LinearGradient>
-                        </View>
-                        {imageError ? (
-                            <CustomText>Erreur de chargement de l'image</CustomText>
-                        ) : (
-                            <View>
-                                <Image
-                                style={styles.backdrop}
-                                // resizeMode="contain"
-                                source={{
-                                    uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
-                                }}
-                                onError={handleImageError}
-                            />
+                        <View>
+                            <View style={[styles.linearGradientContainer, { height: backdropHeight }]}>
+                                <LinearGradient colors={['#101010', 'transparent']}>
+                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                </LinearGradient>
                             </View>
-                        )}
+                            {apiResult.backdrop_path ? (
+                                <Image
+                                    style={styles.backdrop}
+                                    // resizeMode="contain"
+                                    source={{
+                                        uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
+                                    }}
+                                />
+                            ) : (
+                                <CustomText>Erreur de chargement de l'image</CustomText>
+                            )}
+                        </View>
 
                         <View style={styles.content}>
                             <View style={styles.preview}>
@@ -82,47 +131,93 @@ export default function Movie() {
                                                 <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
                                                 <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
                                             </View>
-                                            <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>Matthias Petit</CustomText>
+                                            <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                                {director ? (
+                                                    director.name
+                                                ) : (
+                                                    'Unknow'
+                                                )}
+                                            </CustomText>
                                         </View>
 
                                         <View style={styles.trailerContainer}>
-                                            <TouchableOpacity onPress={() => handleLinkPress(apiResult.videos.results[0].key)} style={ styles.trailerButton }>
+                                            <Pressable onPress={() => handleLinkPress()} style={styles.trailerButton}>
                                                 <CustomText> ► TRAILER </CustomText>
-                                            </TouchableOpacity>
+                                            </Pressable>
                                             <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
                                         </View>
                                     </View>
                                 </View>
 
                                 <View style={styles.posterContainer}>
-                                    {imageError ? (
-                                        <CustomText>Erreur de chargement de l'image</CustomText>
-                                    ) : (
+                                    {apiResult.poster_path ? (
                                         <Image
                                             style={styles.poster}
                                             resizeMode="contain"
                                             source={{
                                                 uri: `https://image.tmdb.org/t/p/original/${apiResult.poster_path}`,
                                             }}
-                                            onError={handleImageError}
                                         />
+                                    ) : (
+                                        <CustomText>Erreur de chargement de l'image</CustomText>
                                     )}
                                 </View>
                             </View>
                             
                             <View>
-                                <CustomText>{apiResult.overview}</CustomText>
+                                <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
+                                <CustomText style={{ marginBottom: 25 }}>{apiResult.overview}</CustomText>
+                            </View>
+                            
+                            <View>
+                                <View>
+                                    <View style={styles.tabBtnContainer}>
+                                        <Pressable onPress={() => handleToggleTab("cast")} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn("cast")}> Cast </CustomText>
+                                        </Pressable>
+                                        <Pressable onPress={() => handleToggleTab("crew")} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn("crew")}> Crew </CustomText>
+                                        </Pressable>
+                                        <Pressable onPress={() => handleToggleTab("details")} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn("details")}> Details </CustomText>
+                                        </Pressable>
+                                    </View> 
+                                </View>
+                                <View style={styles.figuresContainer}>
+                                    {/* <Pressable onPress={handleToggleImages}>
+                                        <CustomText>Afficher toutes les images</CustomText>
+                                    </Pressable> */}
+
+                                    <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
+                                        <LinearGradient colors={['#101010', 'transparent']}>
+                                            <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                        </LinearGradient>
+                                    </View>
+
+                                    <View>
+                                        <Figures
+                                            figures={filteredFigures[selectedTab]}
+                                            selectedTab={selectedTab}
+                                            figuresVisible={figuresVisible}
+                                        />
+                                    </View>
+                                </View>
+                            </View>
+
+                            <View style={{ height: 100 }}>
                             </View>
                         </View>
                     </View>
                 ) : (
                     <CustomText>Chargement...</CustomText>
                 )}
-                <StatusBar style="auto" />
-            </View>
+            </ScrollView>
+        </SafeAreaView>
     )
 }
+export default Movie
 
+const backdropHeight = 220
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -134,16 +229,14 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 0,
         left: 0,
-        height: 220,
         width: '100%',
         transform: [{rotate: '180deg'}]
     },
     linearGradient: {
-        width: 420,
-        height: 100
+        width: 420
     },
     backdrop: {
-        height: 220,
+        height: backdropHeight,
     },
 
     content: {
@@ -199,7 +292,6 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
         borderWidth: 1,
         borderColor: 'white',
-        borderColor: 'white',
         borderRadius: 5
     },
 
@@ -216,7 +308,36 @@ const styles = StyleSheet.create({
         width: '95%',
         borderWidth: 1,
         borderColor: 'white',
-        borderColor: 'white',
         borderRadius: 10
+    },
+
+    tabBtnContainer: {
+        height: 32.5,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: 'white',
+        borderRadius: 5
+    },
+    tabBtn: {
+        width: '30%',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5
+    },
+
+    figuresContainer: {
+        height: 350,
+        overflow: 'hidden'
+    },
+
+    activeTabText: {
+        fontWeight: 'bold'
+    },
+    inactiveTabText: {
+        color: '#B5B5B5'
     }
 })
