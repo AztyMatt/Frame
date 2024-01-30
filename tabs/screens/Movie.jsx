@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
-import CustomText from '../components/tags/CustomText.jsx'
+import CustomText from '../../components/tags/CustomText.jsx'
 import { LinearGradient } from 'expo-linear-gradient'
-import Figures from '../components/Figures.jsx'
+import Figures from '../../components/Figures.jsx'
 
-import { api } from '../services/api.js'
+import { api } from '../../services/api.js'
 
-const Movie = () => {
+const Movie = ({ route }) => {
+    const { movieId } = route.params
     const [apiResult, setApiResult] = useState(null)
 
     const [trailer, setTrailer] = useState([])
@@ -18,10 +19,10 @@ const Movie = () => {
 
     const fetchData = async () => {
         try {
-            const result = await api('/movie/787699?append_to_response=credits%2Cvideos&language=en-US') //%2Crelease_dates
+            const result = await api(`/movie/${movieId}?append_to_response=credits%2Cvideos&language=en-US`) //%2Crelease_dates
             setApiResult(result)
         } catch (error) {
-            console.error('Erreur lors de l\'appel à api:', error.message)
+            // console.error('Erreur lors de l\'appel à api:', error.message) // To fix
         }
     }
 
@@ -64,6 +65,8 @@ const Movie = () => {
     const whichTabBtn = (tab) => {
         return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
+
+    // A useEffect may be needed if you can acces other movie on this tab
     
     useEffect(() => {
         fetchData()
