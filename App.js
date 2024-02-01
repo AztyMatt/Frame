@@ -11,7 +11,7 @@ const App = () => {
     return (
         <NavigationContainer>
             <Tab.Navigator 
-                initialRouteName="ResearchTab"
+                initialRouteName="HomeTab"
                 screenOptions={{
                     tabBarActiveTintColor: 'white',
                     // tabBarInactiveTintColor: 'black',

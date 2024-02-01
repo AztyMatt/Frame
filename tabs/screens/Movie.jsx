@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import CustomText from '../../components/tags/CustomText.jsx'
 import { LinearGradient } from 'expo-linear-gradient'
 import Figures from '../../components/Figures.jsx'
@@ -66,6 +67,29 @@ const Movie = ({ route }) => {
         return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
 
+    const addToWatchlist = async () => {
+        try {
+            // Retrieve existing movies from AsyncStorage
+            const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
+            const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : []
+    
+            // Add the new movie to the list
+            const newMovie = {
+                id: movieId,
+                poster_path: apiResult.poster_path
+            }
+            parsedWatchlist.push(newMovie)
+    
+            // Save the updated list to AsyncStorage
+            await AsyncStorage.setItem('@userWatchlist', JSON.stringify(parsedWatchlist))
+    
+            // You can also display a message or perform another action after successful save.
+            // console.log('Movie successfully saved!')
+        } catch (error) {
+            // console.error('Error saving the movie:', error)
+        }
+    }
+
     // A useEffect may be needed if you can acces other movie on this screen
     
     useEffect(() => {
@@ -73,7 +97,7 @@ const Movie = ({ route }) => {
 
         if (apiResult) {
             const trailer = apiResult.videos.results.find(
-                video => video.name === 'Official Trailer'
+                video => video.name === 'Official Trailer' //Adapt this part 'cause some movies don't have this 'Official Trailer'
             )
             setTrailer(trailer)
 
@@ -94,13 +118,16 @@ const Movie = ({ route }) => {
             )
             setDirector(director)
         }
-    }, [apiResult])
+    }, [apiResult]) //Remove [apiResult] and create a dedicated useEffect or something else for things like trailer, cast etc..
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 {apiResult ? (
                     <View>
+                        <Pressable onPress={addToWatchlist}>
+                            <CustomText>Enregistrer le film</CustomText>
+                        </Pressable>
                         <View>
                             <View style={[styles.linearGradientContainer, { height: backdropHeight }]}>
                                 <LinearGradient colors={['#101010', 'transparent']}>

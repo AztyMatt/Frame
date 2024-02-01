@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigation } from '@react-navigation/native'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import CustomText from '../../components/tags/CustomText.jsx'
 
 import { api } from '../../services/api.js'
@@ -8,6 +9,7 @@ import { api } from '../../services/api.js'
 const Movie = () => {
     const navigation = useNavigation()
     const [apiResult, setApiResult] = useState(null)
+    const [watchlist, setWatchlist] = useState([])
 
     const fetchData = async () => {
         try {
@@ -17,10 +19,28 @@ const Movie = () => {
             // console.error('Error during API call:', error.message)
         }
     }
+
+    const getWatchlist = async () => {
+        try {
+            const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
+            const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : []
+
+            setWatchlist(parsedWatchlist)
+            // console.log('My saved movies:', parsedWatchlist)
+        } catch (error) {
+            // console.error('Error retrieving saved movies:', error)
+        }
+    }
     
     useEffect(() => {
         fetchData()
     }, [])
+
+    useFocusEffect(
+        useCallback(() => {
+            getWatchlist()
+        }, [])
+    )
 
     return (
         <SafeAreaView style={styles.container}>
@@ -56,13 +76,13 @@ const Movie = () => {
                     )}
                 </View>
 
-                {/* <CustomText> FAKE SECTION </CustomText> */}
+                {/* <CustomText>{JSON.stringify(watchlist, null, 2)}</CustomText> */}
                 <View style={{ marginTop: 25 }}>
-                    <CustomText style={styles.sectionTitle}>Currently in theatres</CustomText>
+                    <CustomText style={styles.sectionTitle}>My watchlist</CustomText>
 
-                    {apiResult ? (
+                    {watchlist ? (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                            {apiResult.results.map((movie, index) => (
+                            {watchlist.map((movie, index) => (
                                 <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 15 }}>
                                     <View style={styles.posterContainer}>
                                         {movie.poster_path ? (
@@ -84,7 +104,6 @@ const Movie = () => {
                         <CustomText>Chargement...</CustomText>
                     )}
                 </View>
-                {/* <CustomText> FAKE SECTION </CustomText> */}
             </ScrollView>
         </SafeAreaView>
     )
