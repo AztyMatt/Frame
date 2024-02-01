@@ -1,0 +1,146 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/i07TrwQPrTCt80Sen4xtKpPNvVi.jpg",
+      "genre_ids": [
+        12,
+        10751,
+        14
+      ],
+      "id": 422742,
+      "original_language": "de",
+      "original_title": "Jim Knopf und Lukas der Lokomotivführer",
+      "overview": "A young orphan boy Jim Button, his best friend Luke and a magical steam engine called Emma travel across the world in search of the truth about where Jim came from. Battling pirates and dragons, outsmarting make-believe giants, they must travel through the Forest of a Thousand Wonders, beyond the End of the World to find the hidden Dragon City.",
+      "popularity": 14.751,
+      "poster_path": "/pkJEkOOr1qn5HLGGhkJ0bTTPVET.jpg",
+      "release_date": "2018-03-29",
+      "title": "Jim Button and Luke the Engine Driver",
+      "video": false,
+      "vote_average": 6.5,
+      "vote_count": 152
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/yp9ws1rWcvpwYkV9jOHzX8H7qHf.jpg",
+      "genre_ids": [
+        10770,
+        35,
+        10749
+      ],
+      "id": 1026941,
+      "original_language": "en",
+      "original_title": "Christmas at the Drive-In",
+      "overview": "Sadie Walker is starting over in her hometown of Chesterfield, New York, following a series of major life disruptions that include leaving her law practice after losing her biggest case and no longer being engaged.",
+      "popularity": 12.51,
+      "poster_path": "/mTdVq44kDq2nuMG7QDDlk8WzmN8.jpg",
+      "release_date": "2022-11-25",
+      "title": "Christmas at the Drive-In",
+      "video": false,
+      "vote_average": 6.153,
+      "vote_count": 36
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        18,
+        53,
+        35
+      ],
+      "id": 1196474,
+      "original_language": "el",
+      "original_title": "Ο Τελευταίος Ταξιτζής",
+      "overview": "Thomas works as a taxi driver by night and he lives with his wife, Maria, and his teenage son, Tassos. When one of his customers commits suicide, Thomas is prompted to confront everything he’s kept buried inside for too long, and realize the shortcomings of his life. When he meets Eleni, his client’s lost daughter, he sees in her a way out of his weary life and becomes romantically obsessed with her.",
+      "popularity": 0.6,
+      "poster_path": "/a4KWMhRqp8hE4Fg9WTl2gsXKLFx.jpg",
+      "release_date": "2023-11-06",
+      "title": "The Last Taxi Driver",
+      "video": false,
+      "vote_average": 0,
+      "vote_count": 1
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        10749
+      ],
+      "id": 860317,
+      "original_language": "ko",
+      "original_title": "보도드라이버: 풀코스",
+      "overview": "Darkness falls on the city and their time begins again. Karaoke helpers who entrust themselves to the black Starex and become lovers of men who are weary of the world. Their second story, which shines brighter than the twinkling neon signs on the drunken night street. Jung-in, who has started working again, vows that she will no longer be dragged around by her sidewalk girls. However, contrary to her determination, her heart is shaken by the sad stories of the girls. She eventually decides to get the girls who are being exploited under her boss.",
+      "popularity": 11.409,
+      "poster_path": "/ln38hld2HJkw2VsCm1g83mzYGfM.jpg",
+      "release_date": "2019-06-14",
+      "title": "Driver",
+      "video": false,
+      "vote_average": 0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/1WFbwmw7B7DqtdAXmbYw2nIftvm.jpg",
+      "genre_ids": [
+        28,
+        35,
+        18,
+        10749
+      ],
+      "id": 29014,
+      "original_language": "cn",
+      "original_title": "群龍戲鳳",
+      "overview": "Lo Tung and his friend Malted Candy, pedicab drivers working the streets of Macao, have both fallen in love. The problem is that both their objects of affection - one a baker, the other a prostitute - are working under cruel and lecherous bosses. Somehow, the pair must find a way to win the ladies' hearts and free them from their unpleasant jobs.",
+      "popularity": 7.024,
+      "poster_path": "/2XyMgGLEicUPa3GX9U1v3BEQNs1.jpg",
+      "release_date": "1989-02-11",
+      "title": "Pedicab Driver",
+      "video": false,
+      "vote_average": 6.7,
+      "vote_count": 29
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/y1giivdsGLyo1LCvlsL6mLKyTZ7.jpg",
+      "genre_ids": [
+        53,
+        18,
+        9648
+      ],
+      "id": 1018,
+      "original_language": "en",
+      "original_title": "Mulholland Drive",
+      "overview": "Blonde Betty Elms has only just arrived in Hollywood to become a movie star when she meets an enigmatic brunette with amnesia. Meanwhile, as the two set off to solve the second woman's identity, filmmaker Adam Kesher runs into ominous trouble while casting his latest project.",
+      "popularity": 43.087,
+      "poster_path": "/tVxGt7uffLVhIIcwuldXOMpFBPX.jpg",
+      "release_date": "2001-06-06",
+      "title": "Mulholland Drive",
+      "video": false,
+      "vote_average": 7.821,
+      "vote_count": 5827
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/aKocfcKDF4DJopM6vfRT1CUXRey.jpg",
+      "genre_ids": [
+        35,
+        12,
+        10749
+      ],
+      "id": 13523,
+      "original_language": "en",
+      "original_title": "Sex Drive",
+      "overview": "A high school senior drives cross-country with his best friends to hook up with a babe he met online.",
+      "popularity": 71.422,
+      "poster_path": "/pKaFgIpPtkiYTEqytKPaHzlz4Tn.jpg",
+      "release_date": "2008-10-16",
+      "title": "Sex Drive",
+      "video": false,
+      "vote_average": 6.352,
+      "vote_count": 1259
+    }
+  ],
+  "total_pages": 44,
+  "total_results": 869
+}

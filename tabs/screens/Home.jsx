@@ -14,36 +14,32 @@ const Movie = () => {
             const result = await api('/movie/now_playing?language=en-US&page=1') //%2Crelease_dates
             setApiResult(result)
         } catch (error) {
-            // console.error('Erreur lors de l\'appel à api:', error.message)
+            // console.error('Error during API call:', error.message)
         }
     }
     
     useEffect(() => {
         fetchData()
-
-        if (apiResult) {
-            
-        }
-    }, [apiResult])
+    }, [])
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: 'white', marginBottom: 30 }}>
+            <View style={styles.banner}>
                 <CustomText style={{ fontWeight: 'bold', fontSize: 25 }}>FRAME</CustomText>
             </View>
             <ScrollView style={styles.content}>
-                <View>
-                    <CustomText style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 10 }}>Currently in theatres</CustomText>
+                <View style={{ marginTop: 25 }}>
+                    <CustomText style={styles.sectionTitle}>Currently in theatres</CustomText>
 
                     {apiResult ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
                             {apiResult.results.map((movie, index) => (
-                                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ height: 156, marginRight: 15 }}>
+                                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 15 }}>
                                     <View style={styles.posterContainer}>
                                         {movie.poster_path ? (
                                             <Image
                                                 style={styles.poster}
-                                                resizeMode="contain"
+                                                resizeMode='contain'
                                                 source={{
                                                     uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
                                                 }}
@@ -59,22 +55,20 @@ const Movie = () => {
                         <CustomText>Chargement...</CustomText>
                     )}
                 </View>
-            </ScrollView>
 
-            <ScrollView style={styles.content}>
-                <View>
-                    <CustomText style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 10 }}>Watchlist</CustomText>
+                {/* <CustomText> FAKE SECTION </CustomText> */}
+                <View style={{ marginTop: 25 }}>
+                    <CustomText style={styles.sectionTitle}>Currently in theatres</CustomText>
 
                     {apiResult ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
                             {apiResult.results.map((movie, index) => (
-                                <View key={index} style={{ height: 156, marginRight: 15 }}>
-                                    {/* <CustomText>{JSON.stringify(movie.poster_path, null, 2)}</CustomText> */}
+                                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 15 }}>
                                     <View style={styles.posterContainer}>
                                         {movie.poster_path ? (
                                             <Image
                                                 style={styles.poster}
-                                                resizeMode="contain"
+                                                resizeMode='contain'
                                                 source={{
                                                     uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
                                                 }}
@@ -83,35 +77,50 @@ const Movie = () => {
                                             <CustomText>Erreur de chargement de l'image</CustomText>
                                         )}
                                     </View>
-                                </View>
+                                </Pressable>
                             ))}
                         </ScrollView>
                     ) : (
                         <CustomText>Chargement...</CustomText>
                     )}
                 </View>
+                {/* <CustomText> FAKE SECTION </CustomText> */}
             </ScrollView>
         </SafeAreaView>
     )
 }
 export default Movie
 
-const backdropHeight = 220
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#101010' 
     },
-
     
+    banner: {
+        height: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderBottomWidth: 1,
+        borderColor: 'white'
+    },
     content: {
-        paddingHorizontal: 15,
+        paddingHorizontal: 15
     },
 
-    // posterContainer: {
-    //     height: '100%',
-    //     width: '35%',
-    // },
+    sectionTitle: {
+        fontWeight: 'bold',
+        fontSize: 20,
+        marginBottom: 10
+    },
+
+    horizontalScroll: {
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'wrap'
+    },
+
     poster: {
         height: 144,
         width: 96,

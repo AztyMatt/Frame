@@ -15,14 +15,14 @@ const Movie = ({ route }) => {
     const [filteredFigures, setfilteredFigures] = useState([])
     const [director, setDirector] = useState([])
     const [figuresVisible, setfiguresVisible] = useState(6)
-    const [selectedTab, setSelectedTab] = useState("cast")
+    const [selectedTab, setSelectedTab] = useState('cast')
 
     const fetchData = async () => {
         try {
             const result = await api(`/movie/${movieId}?append_to_response=credits%2Cvideos&language=en-US`) //%2Crelease_dates
             setApiResult(result)
         } catch (error) {
-            // console.error('Erreur lors de l\'appel à api:', error.message) // To fix
+            // console.error('Error during API call:', error.message) // To fix
         }
     }
 
@@ -66,23 +66,23 @@ const Movie = ({ route }) => {
         return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
 
-    // A useEffect may be needed if you can acces other movie on this tab
+    // A useEffect may be needed if you can acces other movie on this screen
     
     useEffect(() => {
         fetchData()
 
         if (apiResult) {
             const trailer = apiResult.videos.results.find(
-                video => video.name === "Official Trailer"
+                video => video.name === 'Official Trailer'
             )
             setTrailer(trailer)
 
             const cast = apiResult.credits.cast.filter(
-                person => person.known_for_department === "Acting"
+                person => person.known_for_department === 'Acting'
             )
 
             // const crew = apiResult.credits.crew.filter(
-            //     person => person.known_for_department === "Crew"
+            //     person => person.known_for_department === 'Crew'
             // )
 
             const crew = apiResult.credits.crew
@@ -90,7 +90,7 @@ const Movie = ({ route }) => {
             setfilteredFigures({ cast, crew })
 
             const director = apiResult.credits.crew.find(
-                person => person.job === "Director"
+                person => person.job === 'Director'
             )
             setDirector(director)
         }
@@ -99,7 +99,6 @@ const Movie = ({ route }) => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
-                {/* <StatusBar backgroundColor="blue" barStyle="light-content"/> */}
                 {apiResult ? (
                     <View>
                         <View>
@@ -111,13 +110,13 @@ const Movie = ({ route }) => {
                             {apiResult.backdrop_path ? (
                                 <Image
                                     style={styles.backdrop}
-                                    // resizeMode="contain"
+                                    // resizeMode='contain'
                                     source={{
                                         uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
                                     }}
                                 />
                             ) : (
-                                <CustomText>Erreur de chargement de l'image</CustomText>
+                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
                             )}
                         </View>
 
@@ -125,7 +124,7 @@ const Movie = ({ route }) => {
                             <View style={styles.preview}>
                                 <View style={styles.infos}>
                                     <View style={styles.titleContainer}>
-                                        <CustomText numberOfLines={2} ellipsizeMode="tail" style={styles.title}>{ apiResult.original_title }</CustomText>
+                                        <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.original_title }</CustomText>
                                     </View>
 
                                     <View style={styles.details}>
@@ -156,13 +155,13 @@ const Movie = ({ route }) => {
                                     {apiResult.poster_path ? (
                                         <Image
                                             style={styles.poster}
-                                            resizeMode="contain"
+                                            resizeMode='contain'
                                             source={{
                                                 uri: `https://image.tmdb.org/t/p/original/${apiResult.poster_path}`,
                                             }}
                                         />
                                     ) : (
-                                        <CustomText>Erreur de chargement de l'image</CustomText>
+                                        <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
                                     )}
                                 </View>
                             </View>
@@ -175,20 +174,20 @@ const Movie = ({ route }) => {
                             <View>
                                 <View>
                                     <View style={styles.tabBtnContainer}>
-                                        <Pressable onPress={() => handleToggleTab("cast")} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn("cast")}> Cast </CustomText>
+                                        <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
                                         </Pressable>
-                                        <Pressable onPress={() => handleToggleTab("crew")} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn("crew")}> Crew </CustomText>
+                                        <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
                                         </Pressable>
-                                        <Pressable onPress={() => handleToggleTab("details")} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn("details")}> Details </CustomText>
+                                        <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('details')}> Details </CustomText>
                                         </Pressable>
                                     </View> 
                                 </View>
                                 <View style={styles.figuresContainer}>
                                     {/* <Pressable onPress={handleToggleImages}>
-                                        <CustomText>Afficher toutes les images</CustomText>
+                                        <CustomText>Show all images</CustomText>
                                     </Pressable> */}
 
                                     <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
@@ -298,7 +297,7 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
 
-    posterContainer: {
+    posterContainer: { // Needs to be removed
         height: '100%',
         width: '35%',
         display: 'flex',

@@ -21,8 +21,8 @@ const Figures = ({ figures, figuresVisible, selectedTab }) => {
                         )}
                         <View style={{ flexShrink: 1 }}>
                             <CustomText style={{ fontWeight: 'bold', fontSize: 15 }}>{figure.name}</CustomText>
-                            {selectedTab === "cast" && <CustomText>{figure.character}</CustomText>}
-                            {selectedTab === "crew" && <CustomText numberOfLines={1} ellipsizeMode="tail">{figure.department} - {figure.job}</CustomText>}
+                            {selectedTab === 'cast' && <CustomText>{figure.character}</CustomText>}
+                            {selectedTab === 'crew' && <CustomText numberOfLines={1} ellipsizeMode='tail'>{figure.department} - {figure.job}</CustomText>}
                         </View>
                     </View>
 
