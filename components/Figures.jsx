@@ -16,7 +16,7 @@ const Figures = ({ figures, figuresVisible, selectedTab }) => {
                         ) : (
                             <Image
                                 style={styles.figureImage}
-                                source={require('../assets/figure.png')}
+                                source={require('../assets/icons/figure.png')}
                             />
                         )}
                         <View style={{ flexShrink: 1 }}>

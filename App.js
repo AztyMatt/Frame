@@ -23,19 +23,19 @@ const App = () => {
                 }}>
                 <Tab.Screen name='HomeTab' component={HomeTab} options={{ headerShown: false, tabBarShowLabel: false, tabBarIcon: ({ color, size }) => (
                     <Image
-                        source={require('./assets/home.png')}
+                        source={require('./assets/icons/home.png')}
                         style={{ width: size, height: size, tintColor: color }} // Just a quick test
                     />
                 ), }}/>
                 <Tab.Screen name='ResearchTab' component={ResearchTab} options={{ headerShown: false, tabBarShowLabel: false, tabBarIcon: ({ color, size }) => (
                     <Image
-                        source={require('./assets/research.png')}
+                        source={require('./assets/icons/research.png')}
                         style={{ width: size, height: size, tintColor: color }} // Just a quick test
                     />
                 ), }}/>
                 <Tab.Screen name='AccountTab' component={HomeTab} options={{ headerShown: false, tabBarShowLabel: false, tabBarIcon: ({ color, size }) => (
                     <Image
-                        source={require('./assets/account.png')}
+                        source={require('./assets/icons/account.png')}
                         style={{ width: size, height: size, tintColor: color }} // Just a quick test
                     />
                 ), }}/>

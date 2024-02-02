@@ -8,24 +8,16 @@ import Figures from '../../components/Figures.jsx'
 
 import { api } from '../../services/api.js'
 
-const Movie = ({ route }) => {
+const Movie = ({ route, navigation }) => {
     const { movieId } = route.params
     const [apiResult, setApiResult] = useState(null)
+    const [onWatchlist, setOnWatchlist] = useState(false)
 
     const [trailer, setTrailer] = useState([])
     const [filteredFigures, setfilteredFigures] = useState([])
     const [director, setDirector] = useState([])
     const [figuresVisible, setfiguresVisible] = useState(6)
     const [selectedTab, setSelectedTab] = useState('cast')
-
-    const fetchData = async () => {
-        try {
-            const result = await api(`/movie/${movieId}?append_to_response=credits%2Cvideos&language=en-US`) //%2Crelease_dates
-            setApiResult(result)
-        } catch (error) {
-            // console.error('Error during API call:', error.message) // To fix
-        }
-    }
 
     const formatReleaseDate = () => {
         return new Date(apiResult.release_date).getFullYear()
@@ -67,118 +59,162 @@ const Movie = ({ route }) => {
         return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
 
-    const addToWatchlist = async () => {
+    const isOnWatchlist = async () => {
+        // Récupérer les films existants depuis AsyncStorage
+        const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist');
+        const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : [];
+
+        // Vérifier si le film est déjà dans la liste de surveillance
+        const movieIndex = parsedWatchlist.findIndex((movie) => movie.id === movieId);
+
+        return { parsedWatchlist, movieIndex };
+    }
+
+    const manageWatchlist = async () => {
         try {
-            // Retrieve existing movies from AsyncStorage
-            const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
-            const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : []
-    
-            // Add the new movie to the list
-            const newMovie = {
-                id: movieId,
-                poster_path: apiResult.poster_path
+            const { parsedWatchlist, movieIndex } = await isOnWatchlist()
+        
+            if (movieIndex !== -1) {
+                parsedWatchlist.splice(movieIndex, 1)
+                setOnWatchlist(false)
+            } else {
+                const newMovie = {
+                    id: movieId,
+                    poster_path: apiResult.poster_path,
+                }
+                parsedWatchlist.push(newMovie)
+                setOnWatchlist(true)
             }
-            parsedWatchlist.push(newMovie)
-    
-            // Save the updated list to AsyncStorage
+      
             await AsyncStorage.setItem('@userWatchlist', JSON.stringify(parsedWatchlist))
-    
-            // You can also display a message or perform another action after successful save.
-            // console.log('Movie successfully saved!')
         } catch (error) {
-            // console.error('Error saving the movie:', error)
+          // console.error('Error updating watchlist:', error)
         }
     }
 
     // A useEffect may be needed if you can acces other movie on this screen
     
     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const result = await api(`/movie/${movieId}?append_to_response=credits%2Cvideos&language=en-US`) //%2Crelease_dates
+                setApiResult(result)
+            } catch (error) {
+                // console.error('Error during API call:', error.message) // To fix
+            }
+        }
         fetchData()
 
+        const checkWatchlist = async () => { 
+            const { movieIndex } = await isOnWatchlist()
+
+            if (movieIndex !== -1) {
+                setOnWatchlist(true)
+            }
+        }
+        checkWatchlist()
+    }, [])
+
+    useEffect(() => { // To improve
         if (apiResult) {
             const trailer = apiResult.videos.results.find(
-                video => video.name === 'Official Trailer' //Adapt this part 'cause some movies don't have this 'Official Trailer'
+                video => video.type === 'Trailer' //Adapt this part 'cause some movies don't have this 'Official Trailer'
             )
             setTrailer(trailer)
-
+    
             const cast = apiResult.credits.cast.filter(
                 person => person.known_for_department === 'Acting'
             )
-
+    
             // const crew = apiResult.credits.crew.filter(
             //     person => person.known_for_department === 'Crew'
             // )
-
+    
             const crew = apiResult.credits.crew
-
+    
             setfilteredFigures({ cast, crew })
-
+    
             const director = apiResult.credits.crew.find(
                 person => person.job === 'Director'
             )
             setDirector(director)
         }
-    }, [apiResult]) //Remove [apiResult] and create a dedicated useEffect or something else for things like trailer, cast etc..
+    }, [apiResult])
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView>
-                {apiResult ? (
-                    <View>
-                        <Pressable onPress={addToWatchlist}>
-                            <CustomText>Enregistrer le film</CustomText>
-                        </Pressable>
+            <View>
+                <View style={{ flex: 1, zIndex: 10, height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: 15, pointerEvents: 'box-none'}}>
+                    <Pressable onPress={() => navigation.goBack()} style={{ height: 40, width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '100%', backgroundColor: 'rgba(16, 16, 16, 0.5)', padding: 10 }}>
+                        <Image
+                            style={{ height: 20, width: 20 }}
+                            source={require('../../assets/icons/back.png')}
+                        />
+                    </Pressable>
+                    <Pressable onPress={() => manageWatchlist()} style={{ height: 40, width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '100%', backgroundColor: 'rgba(16, 16, 16, 0.5)', padding: 10 }}>
+                        <Image
+                            style={{ height: 20, width: 20 }}
+                            source={
+                                onWatchlist ? require('../../assets/icons/watchlist.png') : require('../../assets/icons/watchlistOff.png')
+                            }
+                        />
+                    </Pressable>
+                </View>
+                
+                <ScrollView>
+                    {apiResult ? (
                         <View>
-                            <View style={[styles.linearGradientContainer, { height: backdropHeight }]}>
-                                <LinearGradient colors={['#101010', 'transparent']}>
-                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
-                                </LinearGradient>
-                            </View>
-                            {apiResult.backdrop_path ? (
-                                <Image
-                                    style={styles.backdrop}
-                                    // resizeMode='contain'
-                                    source={{
-                                        uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
-                                    }}
-                                />
-                            ) : (
-                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
-                            )}
-                        </View>
-
-                        <View style={styles.content}>
-                            <View style={styles.preview}>
-                                <View style={styles.infos}>
-                                    <View style={styles.titleContainer}>
-                                        <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.original_title }</CustomText>
-                                    </View>
-
-                                    <View style={styles.details}>
-                                        <View>
-                                            <View style={styles.directorContainer}>
-                                                <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
-                                                <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
-                                            </View>
-                                            <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                                {director ? (
-                                                    director.name
-                                                ) : (
-                                                    'Unknow'
-                                                )}
-                                            </CustomText>
-                                        </View>
-
-                                        <View style={styles.trailerContainer}>
-                                            <Pressable onPress={() => handleLinkPress()} style={styles.trailerButton}>
-                                                <CustomText> ► TRAILER </CustomText>
-                                            </Pressable>
-                                            <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
-                                        </View>
-                                    </View>
+                            {/* <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText> */}
+                            <View>
+                                <View style={[styles.linearGradientContainer, { height: backdropHeight }]}>
+                                    <LinearGradient colors={['#101010', 'transparent']}>
+                                        <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                    </LinearGradient>
                                 </View>
+                                {apiResult.backdrop_path ? (
+                                    <Image
+                                        style={styles.backdrop}
+                                        // resizeMode='contain'
+                                        source={{
+                                            uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
+                                        }}
+                                    />
+                                ) : (
+                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                )}
+                            </View>
 
-                                <View style={styles.posterContainer}>
+                            <View style={styles.content}>
+                                <View style={styles.preview}>
+                                    <View style={styles.infos}>
+                                        <View style={styles.titleContainer}>
+                                            <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.title }</CustomText>
+                                        </View>
+
+                                        <View style={styles.details}>
+                                            <View>
+                                                <View style={styles.directorContainer}>
+                                                    <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
+                                                    <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
+                                                </View>
+                                                <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                                    {director ? (
+                                                        director.name
+                                                    ) : (
+                                                        'Unknow'
+                                                    )}
+                                                </CustomText>
+                                            </View>
+
+                                            <View style={styles.trailerContainer}>
+                                                <Pressable onPress={() => handleLinkPress()} style={styles.trailerButton}>
+                                                    <CustomText> ► TRAILER </CustomText>
+                                                </Pressable>
+                                                <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
+                                            </View>
+                                        </View>
+                                    </View>
+
                                     {apiResult.poster_path ? (
                                         <Image
                                             style={styles.poster}
@@ -191,56 +227,56 @@ const Movie = ({ route }) => {
                                         <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
                                     )}
                                 </View>
-                            </View>
-                            
-                            <View>
-                                <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
-                                <CustomText style={{ marginBottom: 25 }}>{apiResult.overview}</CustomText>
-                            </View>
-                            
-                            <View>
+                                
                                 <View>
-                                    <View style={styles.tabBtnContainer}>
-                                        <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
-                                        </Pressable>
-                                        <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
-                                        </Pressable>
-                                        <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
-                                            <CustomText style={whichTabBtn('details')}> Details </CustomText>
-                                        </Pressable>
-                                    </View> 
+                                    <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
+                                    <CustomText style={{ marginBottom: 25 }}>{apiResult.overview}</CustomText>
                                 </View>
-                                <View style={styles.figuresContainer}>
-                                    {/* <Pressable onPress={handleToggleImages}>
-                                        <CustomText>Show all images</CustomText>
-                                    </Pressable> */}
-
-                                    <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
-                                        <LinearGradient colors={['#101010', 'transparent']}>
-                                            <View style={[styles.linearGradient, { height: 100 }]}></View>
-                                        </LinearGradient>
-                                    </View>
-
+                                
+                                <View>
                                     <View>
-                                        <Figures
-                                            figures={filteredFigures[selectedTab]}
-                                            selectedTab={selectedTab}
-                                            figuresVisible={figuresVisible}
-                                        />
+                                        <View style={styles.tabBtnContainer}>
+                                            <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
+                                                <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
+                                            </Pressable>
+                                            <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
+                                                <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
+                                            </Pressable>
+                                            <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
+                                                <CustomText style={whichTabBtn('details')}> Details </CustomText>
+                                            </Pressable>
+                                        </View> 
+                                    </View>
+                                    <View style={styles.figuresContainer}>
+                                        {/* <Pressable onPress={handleToggleImages}>
+                                            <CustomText>Show all images</CustomText>
+                                        </Pressable> */}
+
+                                        <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
+                                            <LinearGradient colors={['#101010', 'transparent']}>
+                                                <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                            </LinearGradient>
+                                        </View>
+
+                                        <View>
+                                            <Figures
+                                                figures={filteredFigures[selectedTab]}
+                                                selectedTab={selectedTab}
+                                                figuresVisible={figuresVisible}
+                                            />
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
 
-                            <View style={{ height: 100 }}>
+                                <View style={{ height: 100 }}>
+                                </View>
                             </View>
                         </View>
-                    </View>
-                ) : (
-                    <CustomText>Chargement...</CustomText>
-                )}
-            </ScrollView>
+                    ) : (
+                        <CustomText>Chargement...</CustomText>
+                    )}
+                </ScrollView>
+            </View>
         </SafeAreaView>
     )
 }
@@ -250,7 +286,7 @@ const backdropHeight = 220
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#101010' 
+        backgroundColor: '#101010'
     },
 
     linearGradientContainer: {
@@ -284,8 +320,8 @@ const styles = StyleSheet.create({
     },
 
     infos: {
+        flex: 1,
         height: '100%',
-        width: '65%',
         paddingTop: 10
     },
 
@@ -324,17 +360,9 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
 
-    posterContainer: { // Needs to be removed
-        height: '100%',
-        width: '35%',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end'
-    },
     poster: {
         height: '100%',
-        width: '95%',
+        width: 120, // Needs to be improve
         borderWidth: 1,
         borderColor: 'white',
         borderRadius: 10
