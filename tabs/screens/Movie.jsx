@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
 import { LinearGradient } from 'expo-linear-gradient'
 import Figures from '../../components/Figures.jsx'
@@ -33,13 +34,13 @@ const Movie = ({ route, navigation }) => {
         return `${hoursFormat}h${minutesFormat}`
     }
 
-    const handleLinkPress = () => {
-        {trailer ? (
-            trailer.key
+    const handleLinkPress = (trailer) => {
+        trailer ? (
+            Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
         ) : (
-            ''
-        )}
-        Linking.openURL(`https://www.youtube.com/watch?v=${ trailer.key }`)
+            // console.log('No trailer found')
+            null
+        )
     }
 
     // To toggle between 5actors or all of them
@@ -60,13 +61,10 @@ const Movie = ({ route, navigation }) => {
     }
 
     const isOnWatchlist = async () => {
-        // Récupérer les films existants depuis AsyncStorage
         const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist');
         const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : [];
 
-        // Vérifier si le film est déjà dans la liste de surveillance
         const movieIndex = parsedWatchlist.findIndex((movie) => movie.id === movieId);
-
         return { parsedWatchlist, movieIndex };
     }
 
@@ -118,7 +116,7 @@ const Movie = ({ route, navigation }) => {
     useEffect(() => { // To improve
         if (apiResult) {
             const trailer = apiResult.videos.results.find(
-                video => video.type === 'Trailer' //Adapt this part 'cause some movies don't have this 'Official Trailer'
+                video => video.type === 'Trailer'
             )
             setTrailer(trailer)
     
@@ -161,13 +159,13 @@ const Movie = ({ route, navigation }) => {
                     </Pressable>
                 </View>
                 
-                <ScrollView>
+                <ScrollView showsVerticalScrollIndicator={false}>
                     {apiResult ? (
                         <View>
                             {/* <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText> */}
                             <View>
-                                <View style={[styles.linearGradientContainer, { height: backdropHeight }]}>
-                                    <LinearGradient colors={['#101010', 'transparent']}>
+                                <View style={[styles.linearGradientContainer, { height: 220 }]}>
+                                    <LinearGradient colors={[Theme.colors.secondary, 'transparent']}>
                                         <View style={[styles.linearGradient, { height: 100 }]}></View>
                                     </LinearGradient>
                                 </View>
@@ -253,7 +251,7 @@ const Movie = ({ route, navigation }) => {
                                         </Pressable> */}
 
                                         <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
-                                            <LinearGradient colors={['#101010', 'transparent']}>
+                                            <LinearGradient colors={[Theme.colors.secondary, 'transparent']}>
                                                 <View style={[styles.linearGradient, { height: 100 }]}></View>
                                             </LinearGradient>
                                         </View>
@@ -282,11 +280,10 @@ const Movie = ({ route, navigation }) => {
 }
 export default Movie
 
-const backdropHeight = 220
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#101010'
+        backgroundColor: Theme.colors.secondary
     },
 
     linearGradientContainer: {
@@ -300,8 +297,9 @@ const styles = StyleSheet.create({
     linearGradient: {
         width: 420
     },
+
     backdrop: {
-        height: backdropHeight,
+        height: 220,
     },
 
     content: {
@@ -342,11 +340,13 @@ const styles = StyleSheet.create({
         paddingTop: 15,
         paddingBottom: 10 
     },
+
     directorContainer: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center'
     },
+
     trailerContainer: {
         display: 'flex',
         flexDirection: 'row',
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderWidth: 1,
-        borderColor: 'white',
+        borderColor: Theme.colors.primary,
         borderRadius: 5
     },
 
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
         height: '100%',
         width: 120, // Needs to be improve
         borderWidth: 1,
-        borderColor: 'white',
+        borderColor: Theme.colors.primary,
         borderRadius: 10
     },
 
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: 'white',
+        borderColor: Theme.colors.primary,
         borderRadius: 5
     },
     tabBtn: {
@@ -395,6 +395,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     inactiveTabText: {
-        color: '#B5B5B5'
+        color: Theme.colors.primaryLight
     }
 })

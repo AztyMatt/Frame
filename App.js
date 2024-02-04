@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Image } from 'react-native'
 import HomeTab from './tabs/HomeTab.jsx'
 import ResearchTab from './tabs/ResearchTab.jsx'
+import Theme from './assets/styles.js'
 
 const Tab = createBottomTabNavigator()
 
@@ -13,12 +14,12 @@ const App = () => {
             <Tab.Navigator 
                 initialRouteName="HomeTab"
                 screenOptions={{
-                    tabBarActiveTintColor: 'white',
+                    tabBarActiveTintColor: Theme.colors.primary,
                     // tabBarInactiveTintColor: 'black',
                     tabBarStyle: {
-                        backgroundColor: 'black',
+                        backgroundColor: Theme.colors.secondary,
                         borderTopWidth: 1,
-                        borderColor: 'white'
+                        borderTopColor: Theme.colors.primary
                     },
                 }}>
                 <Tab.Screen name='HomeTab' component={HomeTab} options={{ headerShown: false, tabBarShowLabel: false, tabBarIcon: ({ color, size }) => (

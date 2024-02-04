@@ -2,22 +2,49 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
+import { LinearGradient } from 'expo-linear-gradient'
 
 import { api } from '../../services/api.js'
 
 const Movie = () => {
     const navigation = useNavigation()
-    const [apiResult, setApiResult] = useState(null)
+    
+    const [nowPlaying, setNowPlaying] = useState(null)
+    const [upcoming, setUpcoming] = useState(null)
+
+    const [firstUpcoming, setFirstUpcoming] = useState(null)
     const [watchlist, setWatchlist] = useState([])
 
-    const fetchData = async () => {
-        try {
-            const result = await api('/movie/now_playing?language=en-US&page=1') //%2Crelease_dates
-            setApiResult(result)
-        } catch (error) {
-            // console.error('Error during API call:', error.message)
+    function formatReleaseDate(date) {
+        const year = date.getFullYear()
+        const month = (date.getMonth() + 1).toString().padStart(2, '0')
+        const day = date.getDate().toString().padStart(2, '0')
+      
+        const formattedDate = `${year}-${month}-${day}`
+        return formattedDate
+    }
+
+    const handleLinkPress = (id) => {
+        const fetchVideos = async () => {
+            try {
+                const result = await api(`/movie/${id}/videos?language=en-US`) //%2Crelease_dates
+                const trailer = result.results.find(
+                    video => video.type === 'Trailer'
+                )
+
+                trailer ? (
+                    Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
+                ) : (
+                    // console.log('No trailer found')
+                    null
+                )
+            } catch (error) {
+                // console.error('Error during API call:', error.message)
+            }
         }
+        fetchVideos()
     }
 
     const getWatchlist = async () => {
@@ -33,7 +60,40 @@ const Movie = () => {
     }
     
     useEffect(() => {
-        fetchData()
+        const fetchNowPlaying = async () => {
+            try {
+                const result = await api('/movie/now_playing?language=en-US&page=1') //%2Crelease_dates
+                setNowPlaying(result)
+            } catch (error) {
+                // console.error('Error during API call:', error.message)
+            }
+        }
+        fetchNowPlaying()
+
+        const fetchUpcoming = async () => {
+            const currentDate = new Date()
+
+            const oneMonthLater = new Date(currentDate) // Maybe a better way
+            oneMonthLater.setMonth(oneMonthLater.getMonth() + 1)
+
+            try {
+                const result = await api(
+                    `/discover/movie?include_adult=false&include_video=false
+                        &language=en-US
+                        &page=1
+                        &primary_release_date.gte=${formatReleaseDate(currentDate)}
+                        &primary_release_date.lte=${formatReleaseDate(oneMonthLater)}
+                        &region=en
+                        &sort_by=popularity.desc`
+                )
+                setUpcoming(result)
+
+                setFirstUpcoming(result.results[0])
+            } catch (error) {
+                // console.error('Error during API call:', error.message)
+            }
+        }
+        fetchUpcoming()
     }, [])
 
     useFocusEffect(
@@ -44,66 +104,141 @@ const Movie = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.banner}>
-                <CustomText style={{ fontWeight: 'bold', fontSize: 25 }}>FRAME</CustomText>
+            <View style={styles.header}>
+                <Text style={{ fontWeight: 'bold', fontSize: 25, color: Theme.colors.primary }}>FRAME</Text>
             </View>
-            <ScrollView style={styles.content}>
-                <View style={{ marginTop: 25 }}>
-                    <CustomText style={styles.sectionTitle}>Currently in theatres</CustomText>
 
-                    {apiResult ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                            {apiResult.results.map((movie, index) => (
-                                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 15 }}>
-                                    <View style={styles.posterContainer}>
-                                        {movie.poster_path ? (
-                                            <Image
-                                                style={styles.poster}
-                                                resizeMode='contain'
-                                                source={{
-                                                    uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                                }}
-                                            />
-                                        ) : (
-                                            <CustomText>Erreur de chargement de l'image</CustomText>
-                                        )}
+            <ScrollView showsVerticalScrollIndicator={false}>
+                {firstUpcoming ? (
+                    <Pressable onPress={() => navigation.navigate('Movie', { movieId: firstUpcoming.id })} style={{ marginBottom: 5 }}>
+                        <View style={styles.bannerContainer}>
+                            
+                            <View style={styles.banner}>
+                                <View style={styles.titleContainer}>
+                                    <View style={styles.titleUnderline}>
+                                        <CustomText numberOfLines={1} ellipsizeMode='tail' style={styles.title}>{ firstUpcoming.title }</CustomText>
                                     </View>
+                                </View>
+                                <Pressable onPress={() => handleLinkPress(firstUpcoming.id)} style={[styles.trailerButton, {backgroundColor: Theme.colors.secondary }]}>
+                                    <CustomText> ► TRAILER </CustomText>
                                 </Pressable>
-                            ))}
-                        </ScrollView>
+                            </View>
+            
+                            <View style={[styles.linearGradientContainer, { height: '100%' }]}>
+                                <LinearGradient colors={[Theme.colors.secondary, 'transparent']}>
+                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                </LinearGradient>
+                            </View>
+
+                        </View>
+
+                        {firstUpcoming.backdrop_path ? (
+                            <Image
+                                style={styles.backdrop}
+                                // resizeMode='contain'
+                                source={{
+                                    uri: `https://image.tmdb.org/t/p/original/${firstUpcoming.backdrop_path}`,
+                                }}
+                            />
+                        ) : (
+                            null // Future skeleton
+                        )}
+                    </Pressable> 
+                ) : (
+                    null // Future skeleton
+                )}
+
+                <View style={styles.content}>
+                    {nowPlaying ? (
+                        <View style={{ marginVertical: 25 }}>
+                            <CustomText style={styles.sectionTitle}>►  Currently in theatres</CustomText>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+                                {nowPlaying.results.map((movie, index) => (
+                                    <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
+                                        <View style={styles.posterContainer}>
+                                            {movie.poster_path ? (
+                                                <Image
+                                                    style={styles.poster}
+                                                    resizeMode='contain'
+                                                    source={{
+                                                        uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <View style={styles.poster}></View> // Needs to be replace by a better skeleton
+                                            )}
+                                        </View>
+                                    </Pressable>
+                                ))}
+                            </ScrollView>
+                        </View>
                     ) : (
-                        <CustomText>Chargement...</CustomText>
+                        null // Future skeleton
+                    )}
+
+                    {upcoming ? (
+                        <>
+                            <View style={styles.sectionSeparator}></View>
+
+                            <View style={{ marginVertical: 25 }}>
+                                <CustomText style={styles.sectionTitle}>►  Upcoming this month</CustomText>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+                                    {upcoming.results.map((movie, index) => (
+                                        <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
+                                            <View style={styles.posterContainer}>
+                                                {movie.poster_path ? (
+                                                    <Image
+                                                        style={styles.poster}
+                                                        resizeMode='contain'
+                                                        source={{
+                                                            uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <View style={styles.poster}></View> // Needs to be replace by a better skeleton
+                                                )}
+                                            </View>
+                                        </Pressable>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </>
+                    ) : (
+                        null // Future skeleton
+                    )}
+
+                    {watchlist && watchlist.length > 0 ? (
+                        <>
+                            <View style={styles.sectionSeparator}></View>
+
+                            <View style={{ marginVertical: 25 }}>
+                                <CustomText style={styles.sectionTitle}>►  My watchlist</CustomText>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+                                    {watchlist.map((movie, index) => (
+                                        <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
+                                            <View style={styles.posterContainer}>
+                                                {movie.poster_path ? (
+                                                    <Image
+                                                        style={styles.poster}
+                                                        resizeMode='contain'
+                                                        source={{
+                                                            uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <View style={styles.poster}></View> // Needs to be replace by a better skeleton
+                                                )}
+                                            </View>
+                                        </Pressable>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </>
+                    ) : (
+                        null // Future skeleton
                     )}
                 </View>
-
-                {/* <CustomText>{JSON.stringify(watchlist, null, 2)}</CustomText> */}
-                <View style={{ marginTop: 25 }}>
-                    <CustomText style={styles.sectionTitle}>My watchlist</CustomText>
-
-                    {watchlist ? (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                            {watchlist.map((movie, index) => (
-                                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 15 }}>
-                                    <View style={styles.posterContainer}>
-                                        {movie.poster_path ? (
-                                            <Image
-                                                style={styles.poster}
-                                                resizeMode='contain'
-                                                source={{
-                                                    uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                                }}
-                                            />
-                                        ) : (
-                                            <CustomText>Erreur de chargement de l'image</CustomText>
-                                        )}
-                                    </View>
-                                </Pressable>
-                            ))}
-                        </ScrollView>
-                    ) : (
-                        <CustomText>Chargement...</CustomText>
-                    )}
-                </View>
+    
             </ScrollView>
         </SafeAreaView>
     )
@@ -113,17 +248,78 @@ export default Movie
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#101010' 
+        backgroundColor: Theme.colors.secondary
     },
     
-    banner: {
+    header: {
         height: 50,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         borderBottomWidth: 1,
-        borderColor: 'white'
+        borderColor: Theme.colors.primary
     },
+
+    bannerContainer: {
+        zIndex: 1,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: 220
+    },
+    banner: {
+        zIndex: 2,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        paddingHorizontal: 15,
+        paddingVertical: 10
+    },
+
+    titleContainer: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        marginRight: 20 
+    },
+    titleUnderline: {
+        flexShrink: 1,
+        borderBottomWidth: 1,
+        borderColor: Theme.colors.primary,
+        padding: 5
+    },
+    title: {
+        fontWeight: 'bold',
+        fontSize: 22.5
+    },
+
+    trailerButton: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderWidth: 1,
+        borderColor: Theme.colors.primary,
+        borderRadius: 5
+    },
+
+    linearGradientContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        transform: [{rotate: '180deg'}]
+    },
+    linearGradient: {
+        width: 420
+    },
+
+    backdrop: {
+        height: 220,
+    },
+
     content: {
         paddingHorizontal: 15
     },
@@ -133,6 +329,11 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginBottom: 10
     },
+    sectionSeparator: {
+        height: 1,
+        backgroundColor: Theme.colors.primary,
+        marginHorizontal: 50
+    },
 
     horizontalScroll: {
         display: 'flex',
@@ -141,10 +342,10 @@ const styles = StyleSheet.create({
     },
 
     poster: {
-        height: 144,
-        width: 96,
+        height: 150,
+        width: 100,
         borderWidth: 1,
-        borderColor: 'white',
-        borderRadius: 10
+        borderColor: Theme.colors.primaryLight,
+        borderRadius: 5
     },
 })
