@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -19,6 +19,8 @@ const Movie = ({ route, navigation }) => {
     const [providers, setProviders] = useState([])
     const [filteredFigures, setFilteredFigures] = useState([])
     const [director, setDirector] = useState([])
+
+    const HeaderScrollY = useState(new Animated.Value(0))[0]
 
     const [expandedOverview, setExpandedOverview] = useState(false)
     const [isOverviewExpandable, setIsOverviewExpandable] = useState(true)
@@ -108,6 +110,29 @@ const Movie = ({ route, navigation }) => {
     //     }
     // }
 
+    // Header
+    const handleScroll = Animated.event(
+        [{ 
+            nativeEvent: { 
+                contentOffset: { 
+                    y: HeaderScrollY 
+                }
+            } 
+        }],
+      { useNativeDriver: false }
+    )
+  
+    const animatedHeaderOpacity = HeaderScrollY.interpolate({
+        inputRange: [100, 150],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    })
+    const animatedHeaderTitleOpacity = HeaderScrollY.interpolate({
+        inputRange: [150, 200],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    })
+
     // Overview
     const onLayout = (event) => {
         const { height } = event.nativeEvent.layout
@@ -157,7 +182,7 @@ const Movie = ({ route, navigation }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits&language=en-US`) //%2Crelease_dates
+                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar&language=en-US`) //%2Crelease_dates
                 setApiResult(result)
             } catch (error) {
                 // console.error('Error during API call:', error.message) // To fix
@@ -197,11 +222,9 @@ const Movie = ({ route, navigation }) => {
                 person => person.known_for_department === 'Acting'
             )
     
-            // const crew = apiResult.credits.crew.filter(
-            //     person => person.known_for_department === 'Crew'
-            // )
-    
-            const crew = apiResult.credits.crew
+            const crew = apiResult.credits.crew.filter(
+                person => person.department === 'Directing'
+            )
     
             setFilteredFigures({ cast, crew })
     
@@ -219,276 +242,281 @@ const Movie = ({ route, navigation }) => {
             setIsOverviewExpandable(isExpandable)
             setExpandedOverview(!isExpandable)
             animatedLinearGradientOpacity.setValue(isExpandable ? 1 : 0)
-            console.log(overviewHeight, animatedOverviewHeight._value)
-            console.log('isOverviewExpandable ', isExpandable)
-            console.log('ExpandedOverview ', !isExpandable)
+            // console.log(overviewHeight, animatedOverviewHeight._value)
+            // console.log('isOverviewExpandable ', isExpandable)
+            // console.log('ExpandedOverview ', !isExpandable)
         }
     }, [overviewHeight, animatedOverviewHeight])
 
     return (
         <>
             <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
-            <View style={styles.container}>
-                {/* <View style={{ flex: 1, zIndex: 10, height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: 15, pointerEvents: 'box-none'}}>
-                    <Pressable onPress={() => navigation.goBack()} style={{ height: 40, width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '100%', backgroundColor: 'rgba(16, 16, 16, 0.5)', padding: 10 }}>
-                        <Image
-                            style={{ height: 20, width: 20 }}
-                            source={require('../../assets/icons/back.png')}
-                        />
-                    </Pressable>
-                    <Pressable onPress={() => manageWatchlist()} style={{ height: 40, width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '100%', backgroundColor: 'rgba(16, 16, 16, 0.5)', padding: 10 }}>
-                        <Image
-                            style={{ height: 20, width: 20 }}
-                            source={
-                                onWatchlist ? require('../../assets/icons/watchlist.png') : require('../../assets/icons/watchlistOff.png')
-                            }
-                        />
-                    </Pressable>
-                </View> */}
-                
-                <ScrollView showsVerticalScrollIndicator={false}>
-                    {apiResult ? (
-                        <View>
+            {apiResult ? (
+                <View style={styles.container}>
+                    <View style={styles.headerContainer}>
+                        <View style={styles.header}>
+                            <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
+                                <Image
+                                    style={{ height: 20, width: 20 }}
+                                    source={require('../../assets/icons/back.png')}
+                                />
+                            </Pressable>
+                            <Animated.View style={{flex: 1, opacity: animatedHeaderTitleOpacity}}>
+                                <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ apiResult.title }</CustomText>
+                            </Animated.View>
+                            <Pressable onPress={() => manageWatchlist()} style={styles.headerBtn}>
+                                <Image
+                                    style={{ height: 20, width: 20 }}
+                                    source={
+                                        onWatchlist ? require('../../assets/icons/watchlist.png') : require('../../assets/icons/watchlistOff.png')
+                                    }
+                                />
+                            </Pressable>
+                        </View>
+                        <Animated.View style={[styles.headerBackground, { opacity: animatedHeaderOpacity }]}></Animated.View>
+                    </View>
+                    
+                    <ScrollView showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
                             <View>
-                                <View style={[styles.linearGradientContainer, { height: 220 }]}>
-                                    <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                        <View style={[styles.linearGradient, { height: 100 }]}></View>
-                                    </LinearGradient>
-                                </View>
-                                {apiResult.backdrop_path ? (
-                                    <Image
-                                        style={styles.backdrop}
-                                        // resizeMode='contain'
-                                        source={{
-                                            uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
-                                        }}
-                                    />
-                                ) : (
-                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
-                                )}
-                            </View>
-
-                            <View style={styles.content}>
-                                <View style={{paddingHorizontal: 15}}>
-                                    <View style={styles.preview}>
-                                        <View style={styles.infos}>
-                                            <View style={styles.titleContainer}>
-                                                <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.title }</CustomText>
-                                            </View>
-
-                                            <View style={styles.details}>
-                                                <View>
-                                                    <View style={styles.directorContainer}>
-                                                        <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
-                                                        <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
-                                                    </View>
-                                                    <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                                        {director ? (
-                                                            director.name
-                                                        ) : (
-                                                            'Unknow'
-                                                        )}
-                                                    </CustomText>
-                                                </View>
-
-                                                <View style={styles.trailerContainer}>
-                                                    <Pressable onPress={() => handleLinkPress(trailer)} style={styles.trailerBtn}>
-                                                        <CustomText> ► TRAILER </CustomText>
-                                                    </Pressable>
-                                                    <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
-                                                </View>
-                                            </View>
-                                        </View>
-
-                                        {apiResult.poster_path ? (
-                                            <Image
-                                                style={styles.poster}
-                                                resizeMode='contain'
-                                                source={{
-                                                    uri: `https://image.tmdb.org/t/p/original/${apiResult.poster_path}`,
-                                                }}
-                                            />
-                                        ) : (
-                                            <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
-                                        )}
+                                <View>
+                                    <View style={[styles.linearGradientContainer, { height: 220 }]}>
+                                        <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                            <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                        </LinearGradient>
                                     </View>
-                                    
-                                    {/* <CustomText>{JSON.stringify(isOverviewExpandable, null, 2)}</CustomText> */}
-                                    <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={{ marginBottom: 10, overflow: 'hidden' }}>
-                                        <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight}}>
-                                            <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
-                                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                                    <View style={[styles.linearGradient, { height: 50 }]}></View>
-                                                </LinearGradient>
-                                            </Animated.View>
-                                            <View onLayout={onLayout} style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-                                                <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
-                                                <CustomText style={{height: '100%', width: '100%'}}>{apiResult.overview}</CustomText>
-                                            </View>
-                                        </Animated.View>
-                                    </Pressable>
-
-                                    {/* <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText> */}
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{display: 'flex', flexDirection: 'row', marginBottom: 20}}>
-                                        {apiResult && apiResult.genres.map((genre, index) => (
-                                            <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index}
-                                                style={{marginRight: 5, paddingHorizontal: 5,
-                                                    paddingVertical: 2.5, height: 25, borderWidth: 1, borderColor: Theme.colors.primaryDarker,
-                                                    borderRadius: 5, display: 'flex', justifyContent: 'center'
-                                                }}>
-                                                <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
-                                            </Pressable>
-                                        ))}
-                                    </ScrollView>
+                                    {apiResult.backdrop_path ? (
+                                        <Image
+                                            style={styles.backdrop}
+                                            // resizeMode='contain'
+                                            source={{
+                                                uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
+                                            }}
+                                        />
+                                    ) : (
+                                        <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                    )}
                                 </View>
-                                
-                                <View style={styles.sections}>
-                                    <View style={[styles.sectionContainer, { flexDirection: 'row', alignItems: 'center' }]}>
-                                        <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
-                                        {providers ? (
-                                            <View style={styles.providersContainer}>
-                                                <View style={styles.providersContainer}>
-                                                    {providers && providers.slice(0, 5).map((provider, index) => (
-                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: apiResult.id })} key={index} style={{ marginRight: 5 }}>
-                                                            {provider.logo_path ? (
-                                                                <Image
-                                                                    style={styles.provider}
-                                                                    resizeMode='contain'
-                                                                    source={{
-                                                                        uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
-                                                                    }}
-                                                                />
+
+                                <View style={styles.content}>
+                                    <View style={{paddingHorizontal: 15}}>
+                                        <View style={styles.preview}>
+                                            <View style={styles.infos}>
+                                                <Animated.View style={[styles.titleContainer, {opacity: Animated.subtract(1, animatedHeaderOpacity)}]}>
+                                                    <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.title }</CustomText>
+                                                </Animated.View>
+
+                                                <View style={styles.details}>
+                                                    <View>
+                                                        <View style={styles.directorContainer}>
+                                                            <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
+                                                            <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
+                                                        </View>
+                                                        <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                                            {director ? (
+                                                                director.name
                                                             ) : (
-                                                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be replace by a better skeleton
+                                                                'Unknow'
                                                             )}
-                                                        </Pressable>
-                                                    ))}
-                                                </View>
-                                                <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
-                                            </View>
-                                        ) : (
-                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable</CustomText>
-                                        )}
-                                    </View>
-
-                                    <View style={styles.sectionContainer}>
-                                        <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
-
-                                        <View>
-                                            <View style={styles.reviewsContainer}>
-                                                <View style={styles.reviewsInfos}>
-                                                    <View style={{ marginBottom: 7.5}}>
-                                                        <CustomText>
-                                                            {/* {'( '} */}
-                                                            <CustomText style={{fontWeight: 'bold'}}>{formatThousands(apiResult.vote_count)}</CustomText>
-                                                            {' reviews - '}
-                                                            <CustomText style={{fontWeight: 'bold'}}>{`${formatNote(apiResult.vote_average)}★`}</CustomText>
-                                                            {/* {' )'} */}
                                                         </CustomText>
                                                     </View>
 
-                                                    <View style={styles.ratingContainer}>
-                                                        <View style={styles.rating}>
-
-                                                            <View style={styles.ratingNumberContainer}>
-                                                                <CustomText style={styles.ratingNumber}>0</CustomText>
-                                                            </View>
-
-                                                            <View style={styles.ratingBarContainer}>
-                                                                <View style={[styles.ratingBar, {width: `${(formatNote(apiResult.vote_average) / 10) * 100}%`}]}>
-                                                                    <Text
-                                                                        accessibilityLabel=""
-                                                                        selectable={false}
-                                                                        style={styles.ratingBarText}
-                                                                    >
-                                                                        {'/////////////////////' /* Needs to be edited for larger screens */}
-                                                                    </Text>
-                                                                </View>
-                                                            </View>
-
-                                                            <View style={styles.ratingNumberContainer}>
-                                                                <CustomText style={styles.ratingNumber}>10</CustomText>
-                                                            </View>
-
-                                                        </View>
+                                                    <View style={styles.trailerContainer}>
+                                                        <Pressable onPress={() => handleLinkPress(trailer)} style={styles.trailerBtn}>
+                                                            <CustomText> ► TRAILER </CustomText>
+                                                        </Pressable>
+                                                        <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
                                                     </View>
                                                 </View>
-                                                <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: apiResult.id })} style={styles.reviewBtn}>
-                                                    <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
-                                                    <Image
-                                                        style={styles.reviewImg}
-                                                        source={
-                                                            require('../../assets/icons/review.png')
-                                                        }
-                                                    />
-                                                </Pressable>
                                             </View>
-                                        </View>
-                                    </View>
 
-                                    <View style={[styles.sectionContainer, { paddingHorizontal: 0, marginTop: 10 }]}>
-                                        <CustomText style={[styles.sectionTitle, {paddingHorizontal: 15}]}>Reviews for this movie</CustomText>
-
-                                        <View>
-                                            {/* <CustomText style={styles.sectionTitle}>Most rated review</CustomText> */}
-                                            {/* <CustomText>{JSON.stringify(reviews, null, 2)}</CustomText> */}
-                                            {reviews && !reviews.length == 0 ? (
-                                                <ReviewsCarousel reviews={reviews}/>  
+                                            {apiResult.poster_path ? (
+                                                <Image
+                                                    style={styles.poster}
+                                                    resizeMode='contain'
+                                                    source={{
+                                                        uri: `https://image.tmdb.org/t/p/original/${apiResult.poster_path}`,
+                                                    }}
+                                                />
                                             ) : (
-                                                <Text style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</Text>
+                                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
                                             )}
                                         </View>
-                                    </View>
+                                        
+                                        {/* <CustomText>{JSON.stringify(isOverviewExpandable, null, 2)}</CustomText> */}
+                                        <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={{ marginBottom: 10, overflow: 'hidden' }}>
+                                            <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight}}>
+                                                <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
+                                                    <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                                        <View style={[styles.linearGradient, { height: 50 }]}></View>
+                                                    </LinearGradient>
+                                                </Animated.View>
+                                                <View onLayout={onLayout} style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
+                                                    <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
+                                                    <CustomText style={{height: '100%', width: '100%'}}>{apiResult.overview}</CustomText>
+                                                </View>
+                                            </Animated.View>
+                                        </Pressable>
 
-                                    {/* <View style={styles.sectionContainer}>
-                                        <CustomText style={styles.sectionTitle}>Ratings</CustomText>
-                                        <CustomText>
-                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ac justo eu libero vulputate ullamcorper. Sed gravida nunc vitae risus eleifend, vel tempus justo tristique. Vivamus et accumsan elit.
-                                        </CustomText>
-                                    </View> */}
-                                </View>
-                                
-                                <View style={{paddingHorizontal: 15}}>
-                                    <View>
-                                        <View style={styles.tabBtnContainer}>
-                                            <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
-                                            </Pressable>
-                                            <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
-                                            </Pressable>
-                                            <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('details')}> Details </CustomText>
-                                            </Pressable>
-                                        </View> 
+                                        <CustomText>{JSON.stringify(apiResult.similar, null, 2)}</CustomText>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{display: 'flex', flexDirection: 'row', marginBottom: 20}}>
+                                            {apiResult && apiResult.genres.map((genre, index) => (
+                                                <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index}
+                                                    style={{marginRight: 5, paddingHorizontal: 5,
+                                                        paddingVertical: 2.5, height: 25, borderWidth: 1, borderColor: Theme.colors.primaryDarker,
+                                                        borderRadius: 5, display: 'flex', justifyContent: 'center'
+                                                    }}>
+                                                    <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
+                                                </Pressable>
+                                            ))}
+                                        </ScrollView>
                                     </View>
-                                    <View style={styles.figuresContainer}>
-                                        {/* <Pressable onPress={handleToggleImages}>
-                                            <CustomText>Show all images</CustomText>
-                                        </Pressable> */}
-
-                                        <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
-                                            <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                                <View style={[styles.linearGradient, { height: 100 }]}></View>
-                                            </LinearGradient>
+                                    
+                                    <View style={styles.sections}>
+                                        <View style={[styles.sectionContainer, { flexDirection: 'row', alignItems: 'center' }]}>
+                                            <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
+                                            {providers ? (
+                                                <View style={styles.providersContainer}>
+                                                    <View style={styles.providersContainer}>
+                                                        {providers && providers.slice(0, 5).map((provider, index) => (
+                                                            <Pressable onPress={() => navigation.navigate('Providers', { movieId: apiResult.id })} key={index} style={{ marginRight: 5 }}>
+                                                                {provider.logo_path ? (
+                                                                    <Image
+                                                                        style={styles.provider}
+                                                                        resizeMode='contain'
+                                                                        source={{
+                                                                            uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be replace by a better skeleton
+                                                                )}
+                                                            </Pressable>
+                                                        ))}
+                                                    </View>
+                                                    <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
+                                                </View>
+                                            ) : (
+                                                <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable</CustomText>
+                                            )}
                                         </View>
 
+                                        <View style={styles.sectionContainer}>
+                                            <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
+
+                                            <View>
+                                                <View style={styles.reviewsContainer}>
+                                                    <View style={styles.reviewsInfos}>
+                                                        <View style={{ marginBottom: 7.5}}>
+                                                            <CustomText>
+                                                                {/* {'( '} */}
+                                                                <CustomText style={{fontWeight: 'bold'}}>{formatThousands(apiResult.vote_count)}</CustomText>
+                                                                {' reviews - '}
+                                                                <CustomText style={{fontWeight: 'bold'}}>{`${formatNote(apiResult.vote_average)}★`}</CustomText>
+                                                                {/* {' )'} */}
+                                                            </CustomText>
+                                                        </View>
+
+                                                        <View style={styles.ratingContainer}>
+                                                            <View style={styles.rating}>
+
+                                                                <View style={styles.ratingNumberContainer}>
+                                                                    <CustomText style={styles.ratingNumber}>0</CustomText>
+                                                                </View>
+
+                                                                <View style={styles.ratingBarContainer}>
+                                                                    <View style={[styles.ratingBar, {width: `${(formatNote(apiResult.vote_average) / 10) * 100}%`}]}>
+                                                                        <Text
+                                                                            aria-label=""
+                                                                            style={styles.ratingBarText}
+                                                                        >
+                                                                            {'/////////////////////' /* Needs to be edited for larger screens */}
+                                                                        </Text>
+                                                                    </View>
+                                                                </View>
+
+                                                                <View style={styles.ratingNumberContainer}>
+                                                                    <CustomText style={styles.ratingNumber}>10</CustomText>
+                                                                </View>
+
+                                                            </View>
+                                                        </View>
+                                                    </View>
+                                                    <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: apiResult.id })} style={styles.reviewBtn}>
+                                                        <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
+                                                        <Image
+                                                            style={styles.reviewImg}
+                                                            source={
+                                                                require('../../assets/icons/review.png')
+                                                            }
+                                                        />
+                                                    </Pressable>
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                        <View style={[styles.sectionContainer, { paddingHorizontal: 0, marginTop: 10 }]}>
+                                            <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
+
+                                            <View>
+                                                {/* <CustomText style={styles.sectionTitle}>Most rated review</CustomText> */}
+                                                {/* <CustomText>{JSON.stringify(reviews, null, 2)}</CustomText> */}
+                                                {reviews && !reviews.length == 0 ? (
+                                                    <ReviewsCarousel reviews={reviews}/>  
+                                                ) : (
+                                                    <Text style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</Text>
+                                                )}
+                                            </View>
+                                        </View>
+
+                                        {/* <View style={styles.sectionContainer}>
+                                            <CustomText style={styles.sectionTitle}>Ratings</CustomText>
+                                            <CustomText>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ac justo eu libero vulputate ullamcorper. Sed gravida nunc vitae risus eleifend, vel tempus justo tristique. Vivamus et accumsan elit.
+                                            </CustomText>
+                                        </View> */}
+                                    </View>
+                                    
+                                    <View style={{paddingHorizontal: 15}}>
                                         <View>
-                                            <Figures
-                                                figures={filteredFigures[selectedTab]}
-                                                selectedTab={selectedTab}
-                                                figuresVisible={figuresVisible}
-                                            />
+                                            <View style={styles.tabBtnContainer}>
+                                                <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
+                                                    <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
+                                                </Pressable>
+                                                <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
+                                                    <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
+                                                </Pressable>
+                                                <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
+                                                    <CustomText style={whichTabBtn('details')}> Details </CustomText>
+                                                </Pressable>
+                                            </View> 
+                                        </View>
+                                        <View style={styles.figuresContainer}>
+                                            {/* <Pressable onPress={handleToggleImages}>
+                                                <CustomText>Show all images</CustomText>
+                                            </Pressable> */}
+
+                                            <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
+                                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                                </LinearGradient>
+                                            </View>
+
+                                            <View>
+                                                <Figures
+                                                    figures={filteredFigures[selectedTab]}
+                                                    selectedTab={selectedTab}
+                                                    figuresVisible={figuresVisible}
+                                                />
+                                            </View>
                                         </View>
                                     </View>
                                 </View>
                             </View>
-                        </View>
-                    ) : (
-                        <CustomText>Chargement...</CustomText>
-                    )}
-                </ScrollView>
-            </View>
+                    </ScrollView>
+                </View>
+            ) : (
+                <CustomText>Chargement...</CustomText>
+            )}
         </>
     )
 }
@@ -497,6 +525,42 @@ export default Movie
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: Theme.colors.secondaryDarker
+    },
+
+    headerContainer: {
+        zIndex: 10,
+        flex: 1,
+        width: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        pointerEvents: 'box-none'
+    },
+    header: {
+        zIndex: 11,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 7.5
+    },
+    headerBtn: {
+        height: 40,
+        width: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '100%',
+        backgroundColor: Theme.colors.secondaryDarker
+    },
+    headerBackground: {
+        flex: 1,
+        position: 'absolute',
+        height: '100%',
+        width: '100%',
+        borderBottomWidth: 1,
+        borderColor: Theme.colors.primary,
         backgroundColor: Theme.colors.secondaryDarker
     },
 
@@ -673,7 +737,8 @@ const styles = StyleSheet.create({
         // letterSpacing: 0.25,
         lineHeight: 20,
         color: Theme.colors.primaryDarker,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        userSelect: 'none'
     },
 
     reviewBtn: {
