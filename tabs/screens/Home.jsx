@@ -119,13 +119,13 @@ const Movie = () => {
                                         <CustomText numberOfLines={1} ellipsizeMode='tail' style={styles.title}>{ firstUpcoming.title }</CustomText>
                                     </View>
                                 </View>
-                                <Pressable onPress={() => handleLinkPress(firstUpcoming.id)} style={[styles.trailerButton, {backgroundColor: Theme.colors.secondary }]}>
+                                <Pressable onPress={() => handleLinkPress(firstUpcoming.id)} style={[styles.trailerButton, {backgroundColor: Theme.colors.secondaryDarker }]}>
                                     <CustomText> ► TRAILER </CustomText>
                                 </Pressable>
                             </View>
             
                             <View style={[styles.linearGradientContainer, { height: '100%' }]}>
-                                <LinearGradient colors={[Theme.colors.secondary, 'transparent']}>
+                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                     <View style={[styles.linearGradient, { height: 100 }]}></View>
                                 </LinearGradient>
                             </View>
@@ -248,7 +248,7 @@ export default Movie
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.secondary
+        backgroundColor: Theme.colors.secondaryDarker
     },
     
     header: {
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
         height: 150,
         width: 100,
         borderWidth: 1,
-        borderColor: Theme.colors.primaryLight,
+        borderColor: Theme.colors.primaryDarker,
         borderRadius: 5
     },
 })

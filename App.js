@@ -17,7 +17,7 @@ const App = () => {
                     tabBarActiveTintColor: Theme.colors.primary,
                     // tabBarInactiveTintColor: 'black',
                     tabBarStyle: {
-                        backgroundColor: Theme.colors.secondary,
+                        backgroundColor: Theme.colors.secondaryDarker,
                         borderTopWidth: 1,
                         borderTopColor: Theme.colors.primary
                     },

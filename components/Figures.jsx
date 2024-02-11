@@ -1,6 +1,7 @@
-import React from 'react';
-import { StyleSheet, View, Image } from 'react-native';
-import CustomText from './tags/CustomText';
+import React from 'react'
+import { StyleSheet, View, Image } from 'react-native'
+import Theme from '../assets/styles.js'
+import CustomText from './tags/CustomText'
 
 const Figures = ({ figures, figuresVisible, selectedTab }) => {
     return (
@@ -44,7 +45,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginVertical: 5,
         borderBottomWidth: 1,
-        borderColor: '#B5B5B5',
+        borderColor: Theme.colors.primaryDarker,
         borderRadius: 5
     },
 
