@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
-import { LinearGradient } from 'expo-linear-gradient'
+import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
 
 import { api } from '../../services/api.js'
 
-const Movie = () => {
+const Home = () => {
     const navigation = useNavigation()
     
     const [nowPlaying, setNowPlaying] = useState(null)
@@ -152,25 +153,7 @@ const Movie = () => {
                     {nowPlaying ? (
                         <View style={{ marginVertical: 25 }}>
                             <CustomText style={styles.sectionTitle}>►  Currently in theatres</CustomText>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                                {nowPlaying.results.map((movie, index) => (
-                                    <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
-                                        <View style={styles.posterContainer}>
-                                            {movie.poster_path ? (
-                                                <Image
-                                                    style={styles.poster}
-                                                    resizeMode='contain'
-                                                    source={{
-                                                        uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                                    }}
-                                                />
-                                            ) : (
-                                                <View style={styles.poster}></View> // Needs to be replace by a better skeleton
-                                            )}
-                                        </View>
-                                    </Pressable>
-                                ))}
-                            </ScrollView>
+                            <MoviesHorizontalList movies={nowPlaying.results} navigation={navigation}></MoviesHorizontalList>
                         </View>
                     ) : (
                         null // Future skeleton
@@ -182,25 +165,7 @@ const Movie = () => {
 
                             <View style={{ marginVertical: 25 }}>
                                 <CustomText style={styles.sectionTitle}>►  Upcoming this month</CustomText>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                                    {upcoming.results.map((movie, index) => (
-                                        <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
-                                            <View style={styles.posterContainer}>
-                                                {movie.poster_path ? (
-                                                    <Image
-                                                        style={styles.poster}
-                                                        resizeMode='contain'
-                                                        source={{
-                                                            uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <View style={styles.poster}></View> // Needs to be replace by a better skeleton
-                                                )}
-                                            </View>
-                                        </Pressable>
-                                    ))}
-                                </ScrollView>
+                                <MoviesHorizontalList movies={upcoming.results} navigation={navigation}></MoviesHorizontalList>
                             </View>
                         </>
                     ) : (
@@ -213,25 +178,7 @@ const Movie = () => {
 
                             <View style={{ marginVertical: 25 }}>
                                 <CustomText style={styles.sectionTitle}>►  My watchlist</CustomText>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                                    {watchlist.map((movie, index) => (
-                                        <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
-                                            <View style={styles.posterContainer}>
-                                                {movie.poster_path ? (
-                                                    <Image
-                                                        style={styles.poster}
-                                                        resizeMode='contain'
-                                                        source={{
-                                                            uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <View style={styles.poster}></View> // Needs to be replace by a better skeleton
-                                                )}
-                                            </View>
-                                        </Pressable>
-                                    ))}
-                                </ScrollView>
+                                <MoviesHorizontalList movies={watchlist} navigation={navigation}></MoviesHorizontalList>
                             </View>
                         </>
                     ) : (
@@ -243,7 +190,7 @@ const Movie = () => {
         </SafeAreaView>
     )
 }
-export default Movie
+export default Home
 
 const styles = StyleSheet.create({
     container: {
@@ -347,5 +294,5 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Theme.colors.primaryDarker,
         borderRadius: 5
-    },
+    }
 })

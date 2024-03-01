@@ -5,7 +5,7 @@ import CustomText from './tags/CustomText.jsx'
 
 const screenWidth = Dimensions.get('window').width
 
-const Carousel = ({ navigation, reviews }) => {
+const ReviewsCarousel = ({ navigation, reviews }) => {
     const scrollViewRef = useRef(null)
     const [activeIndex, setActiveIndex] = useState(0)
 
@@ -13,6 +13,12 @@ const Carousel = ({ navigation, reviews }) => {
         setActiveIndex(index)
         scrollViewRef.current.scrollTo({ x: index * screenWidth, y: 0, animated: true })
     }
+
+    // Reset
+    useEffect(() => {
+        setActiveIndex(0)
+        scrollViewRef.current.scrollTo({ x: 0, animated: false })
+    }, [reviews])
 
     return (
         <View style={styles.carouselContainer}>
@@ -74,6 +80,7 @@ const Carousel = ({ navigation, reviews }) => {
         </View>
     )
 }
+export default ReviewsCarousel
 
 const styles = StyleSheet.create({
     carouselContainer: {
@@ -156,5 +163,3 @@ const styles = StyleSheet.create({
         borderRadius: 5
     }
 })
-
-export default Carousel

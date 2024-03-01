@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
-import { LinearGradient } from 'expo-linear-gradient'
 import ReviewsCarousel from '../../components/ReviewsCarousel.jsx'
 import Figures from '../../components/Figures.jsx'
+import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
 
 import { api } from '../../services/api.js'
+
+const externalIdLinks = {
+    imdb_id: 'https://www.imdb.com/title/',
+    wikidata_id: 'https://www.wikidata.org/wiki/',
+    facebook_id: 'https://www.facebook.com/',
+    instagram_id: 'https://www.instagram.com/',
+    twitter_id: 'https://twitter.com/'
+}
 
 const Movie = ({ route, navigation }) => {
     const { movieId } = route.params
@@ -22,10 +31,11 @@ const Movie = ({ route, navigation }) => {
 
     const HeaderScrollY = useState(new Animated.Value(0))[0]
 
+    const maxOverviewHeight = 110
     const [expandedOverview, setExpandedOverview] = useState(false)
     const [isOverviewExpandable, setIsOverviewExpandable] = useState(true)
     const [overviewHeight, setOverviewHeight] = useState(0)
-    const animatedOverviewHeight = useState(new Animated.Value(105))[0]
+    const animatedOverviewHeight= useState(new Animated.Value(maxOverviewHeight))[0]
     const animatedLinearGradientOpacity = useState(new Animated.Value(1))[0]
 
     const [reviews, setReviews] = useState(null)
@@ -34,6 +44,8 @@ const Movie = ({ route, navigation }) => {
     const [selectedTab, setSelectedTab] = useState('cast')
 
     // Main
+    const mainScrollViewRef = useRef()
+
     const isOnWatchlist = async () => {
         const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
         const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : []
@@ -84,7 +96,7 @@ const Movie = ({ route, navigation }) => {
         return `${hoursFormat}h${minutesFormat}`
     }
 
-    const handleLinkPress = (trailer) => {
+    const handleTrailerLink = (trailer) => { // Needs to be improved (if ?, directly pass trailer.key as parameter ?, change styles of btn if trailer null ?)
         trailer ? (
             Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
         ) : (
@@ -93,12 +105,21 @@ const Movie = ({ route, navigation }) => {
         )
     }
 
-    function formatNote(note) {
+    const formatNote = (note) => {
         return Math.floor(note * 10) / 10
     }
 
-    function formatThousands(note) {
+    const formatThousands = (note) => {
         return note.toLocaleString('en-US')
+    }
+
+    const formatExternalIdKey = (key) => {
+        return key.charAt(0).toUpperCase() + key.slice(1).replace('_id', '')
+    }
+
+    const handleExternalIdLink = (website, id) => {
+        const url = website && externalIdLinks[website] ? `${externalIdLinks[website]}${id}` : `${id}`
+        Linking.openURL(url)
     }
 
     // To toggle between 5actors or all of them
@@ -142,7 +163,7 @@ const Movie = ({ route, navigation }) => {
     const toggleOverview = () => {
         if (expandedOverview) {
             Animated.timing(animatedOverviewHeight, {
-                toValue: 105,
+                toValue: maxOverviewHeight,
                 duration: 300,
                 useNativeDriver: false,
             }).start()
@@ -177,13 +198,35 @@ const Movie = ({ route, navigation }) => {
         return [selectedTab === tab ? [styles.activeTabText] : [styles.inactiveTabText], { textAlign: 'center' }]
     }
     // A useEffect may be needed if you can acces other movie on this screen
+
+    function mostPopular(people) {
+        let closestPerson = null
+        let closestDifference = Infinity
+        
+        for (const person of people) {
+            if (person && person.popularity) {
+                const difference = Math.abs(person.popularity - 100)
+                if (difference < closestDifference) {
+                    closestDifference = difference
+                    closestPerson = person
+                }
+            }
+        }
+        return closestPerson
+    }
     
     // Main
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar&language=en-US`) //%2Crelease_dates
+                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en-US`) //%2Crelease_dates
                 setApiResult(result)
+
+                // Reset
+                mainScrollViewRef.current.scrollTo({ y: 0, animated: false })
+                animatedOverviewHeight.setValue(maxOverviewHeight)
+                animatedLinearGradientOpacity.setValue(1)
+                setSelectedTab('cast')
             } catch (error) {
                 // console.error('Error during API call:', error.message) // To fix
             }
@@ -193,12 +236,11 @@ const Movie = ({ route, navigation }) => {
         const checkWatchlist = async () => { 
             const { movieIndex } = await isOnWatchlist()
 
-            if (movieIndex !== -1) {
-                setOnWatchlist(true)
-            }
+            setOnWatchlist(movieIndex !== -1 ? true : false)
         }
         checkWatchlist()
-    }, [])
+
+    }, [movieId])
 
     // formatted Data
     useEffect(() => { // To improve
@@ -221,22 +263,53 @@ const Movie = ({ route, navigation }) => {
             const cast = apiResult.credits.cast.filter(
                 person => person.known_for_department === 'Acting'
             )
-    
-            const crew = apiResult.credits.crew.filter(
-                person => person.department === 'Directing'
-            )
-    
-            setFilteredFigures({ cast, crew })
-    
+
             const director = apiResult.credits.crew.find(
                 person => person.job === 'Director'
             )
             setDirector(director)
+    
+            // To improve
+            const filters = [
+                { department: 'Directing', job: 'Co-Director' },
+                { department: 'Production', job: 'Executive Producer' },
+                { department: 'Camera', job: 'Director of Photography' },
+                { department: 'Editing', job: 'Editor' },
+                { department: 'Writing', job: 'Screenplay' },
+                { department: 'Sound', job: 'Original Music Composer' } // Optionnal
+            ] 
+            let crew = []
+
+            if (director) {
+                crew.unshift(director)
+            }
+            
+            for (const { department, job } of filters) {
+                let filteredPeople = apiResult.credits.crew.filter(
+                    person => person.department === department && person.job === job
+                )
+
+                if (filteredPeople.length === 0) {
+                    filteredPeople = apiResult.credits.crew.filter(person => person.department === department)
+
+                    if (department === 'Directing' && director) {
+                        filteredPeople = filteredPeople.filter(person => person !== director)
+                    }
+                }
+
+                if (!filteredPeople.includes(undefined)) {
+                    filteredPeople = [mostPopular(filteredPeople)]
+                
+                    crew = [...crew, ...filteredPeople]
+                }
+            }
+            setFilteredFigures({ cast, crew })
         }
     }, [apiResult])
 
     // Overview
-    useEffect(() => { 
+    useEffect(() => {
+        // console.log('overviewHeight :', overviewHeight)
         if (overviewHeight > 0) {
             const isExpandable = overviewHeight > animatedOverviewHeight._value
             setIsOverviewExpandable(isExpandable)
@@ -257,26 +330,28 @@ const Movie = ({ route, navigation }) => {
                         <View style={styles.header}>
                             <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
                                 <Image
-                                    style={{ height: 20, width: 20 }}
+                                    style={styles.headerBtnImg}
                                     source={require('../../assets/icons/back.png')}
                                 />
+                                <View style={styles.headerBtnBackground}></View>
                             </Pressable>
                             <Animated.View style={{flex: 1, opacity: animatedHeaderTitleOpacity}}>
                                 <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ apiResult.title }</CustomText>
                             </Animated.View>
                             <Pressable onPress={() => manageWatchlist()} style={styles.headerBtn}>
                                 <Image
-                                    style={{ height: 20, width: 20 }}
+                                    style={styles.headerBtnImg}
                                     source={
                                         onWatchlist ? require('../../assets/icons/watchlist.png') : require('../../assets/icons/watchlistOff.png')
                                     }
                                 />
+                                <View style={styles.headerBtnBackground}></View>
                             </Pressable>
                         </View>
                         <Animated.View style={[styles.headerBackground, { opacity: animatedHeaderOpacity }]}></Animated.View>
                     </View>
                     
-                    <ScrollView showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
+                    <ScrollView ref={mainScrollViewRef} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
                             <View>
                                 <View>
                                     <View style={[styles.linearGradientContainer, { height: 220 }]}>
@@ -321,7 +396,7 @@ const Movie = ({ route, navigation }) => {
                                                     </View>
 
                                                     <View style={styles.trailerContainer}>
-                                                        <Pressable onPress={() => handleLinkPress(trailer)} style={styles.trailerBtn}>
+                                                        <Pressable onPress={() => handleTrailerLink(trailer)} style={styles.trailerBtn}>
                                                             <CustomText> ► TRAILER </CustomText>
                                                         </Pressable>
                                                         <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
@@ -342,41 +417,36 @@ const Movie = ({ route, navigation }) => {
                                             )}
                                         </View>
                                         
-                                        {/* <CustomText>{JSON.stringify(isOverviewExpandable, null, 2)}</CustomText> */}
-                                        <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={{ marginBottom: 10, overflow: 'hidden' }}>
+                                        <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
                                             <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight}}>
                                                 <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
                                                     <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                                         <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                     </LinearGradient>
                                                 </Animated.View>
-                                                <View onLayout={onLayout} style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-                                                    <CustomText style={{ fontWeight: 'bold', marginBottom: 5 }}>{apiResult.tagline}</CustomText>
-                                                    <CustomText style={{height: '100%', width: '100%'}}>{apiResult.overview}</CustomText>
+                                                <View onLayout={onLayout} style={styles.overviewContainer}>
+                                                    <CustomText style={styles.tagline}>{apiResult.tagline}</CustomText>
+                                                    <CustomText style={styles.overview}>{apiResult.overview}</CustomText>
                                                 </View>
                                             </Animated.View>
                                         </Pressable>
 
-                                        <CustomText>{JSON.stringify(apiResult.similar, null, 2)}</CustomText>
-                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{display: 'flex', flexDirection: 'row', marginBottom: 20}}>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
                                             {apiResult && apiResult.genres.map((genre, index) => (
-                                                <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index}
-                                                    style={{marginRight: 5, paddingHorizontal: 5,
-                                                        paddingVertical: 2.5, height: 25, borderWidth: 1, borderColor: Theme.colors.primaryDarker,
-                                                        borderRadius: 5, display: 'flex', justifyContent: 'center'
-                                                    }}>
+                                                <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index} style={styles.genre}>
                                                     <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
                                                 </Pressable>
                                             ))}
                                         </ScrollView>
                                     </View>
                                     
-                                    <View style={styles.sections}>
-                                        <View style={[styles.sectionContainer, { flexDirection: 'row', alignItems: 'center' }]}>
+                                    <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText>
+                                    <View style={styles.sectionContainer}>
+                                        <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                             <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
                                             {providers ? (
-                                                <View style={styles.providersContainer}>
-                                                    <View style={styles.providersContainer}>
+                                                <View style={styles.providerContainer}>
+                                                    <View style={styles.providerContainer}>
                                                         {providers && providers.slice(0, 5).map((provider, index) => (
                                                             <Pressable onPress={() => navigation.navigate('Providers', { movieId: apiResult.id })} key={index} style={{ marginRight: 5 }}>
                                                                 {provider.logo_path ? (
@@ -400,17 +470,17 @@ const Movie = ({ route, navigation }) => {
                                             )}
                                         </View>
 
-                                        <View style={styles.sectionContainer}>
+                                        <View style={styles.section}>
                                             <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
 
                                             <View>
-                                                <View style={styles.reviewsContainer}>
-                                                    <View style={styles.reviewsInfos}>
+                                                <View style={styles.reviewContainer}>
+                                                    <View style={styles.reviewInfos}>
                                                         <View style={{ marginBottom: 7.5}}>
                                                             <CustomText>
                                                                 {/* {'( '} */}
                                                                 <CustomText style={{fontWeight: 'bold'}}>{formatThousands(apiResult.vote_count)}</CustomText>
-                                                                {' reviews - '}
+                                                                {' ratings - '}
                                                                 <CustomText style={{fontWeight: 'bold'}}>{`${formatNote(apiResult.vote_average)}★`}</CustomText>
                                                                 {/* {' )'} */}
                                                             </CustomText>
@@ -426,7 +496,7 @@ const Movie = ({ route, navigation }) => {
                                                                 <View style={styles.ratingBarContainer}>
                                                                     <View style={[styles.ratingBar, {width: `${(formatNote(apiResult.vote_average) / 10) * 100}%`}]}>
                                                                         <Text
-                                                                            aria-label=""
+                                                                            aria-label=''
                                                                             style={styles.ratingBarText}
                                                                         >
                                                                             {'/////////////////////' /* Needs to be edited for larger screens */}
@@ -454,21 +524,20 @@ const Movie = ({ route, navigation }) => {
                                             </View>
                                         </View>
 
-                                        <View style={[styles.sectionContainer, { paddingHorizontal: 0, marginTop: 10 }]}>
+                                        <View style={[styles.section, { paddingHorizontal: 0, marginTop: 10 }]}>
                                             <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
 
                                             <View>
                                                 {/* <CustomText style={styles.sectionTitle}>Most rated review</CustomText> */}
-                                                {/* <CustomText>{JSON.stringify(reviews, null, 2)}</CustomText> */}
                                                 {reviews && !reviews.length == 0 ? (
                                                     <ReviewsCarousel reviews={reviews}/>  
                                                 ) : (
-                                                    <Text style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</Text>
+                                                    <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
                                                 )}
                                             </View>
                                         </View>
 
-                                        {/* <View style={styles.sectionContainer}>
+                                        {/* <View style={styles.section}>
                                             <CustomText style={styles.sectionTitle}>Ratings</CustomText>
                                             <CustomText>
                                                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ac justo eu libero vulputate ullamcorper. Sed gravida nunc vitae risus eleifend, vel tempus justo tristique. Vivamus et accumsan elit.
@@ -490,14 +559,14 @@ const Movie = ({ route, navigation }) => {
                                                 </Pressable>
                                             </View> 
                                         </View>
-                                        <View style={styles.figuresContainer}>
+                                        <View style={styles.figureContainer}>
                                             {/* <Pressable onPress={handleToggleImages}>
                                                 <CustomText>Show all images</CustomText>
                                             </Pressable> */}
 
                                             <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
                                                 <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                                    <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                 </LinearGradient>
                                             </View>
 
@@ -509,6 +578,34 @@ const Movie = ({ route, navigation }) => {
                                                 />
                                             </View>
                                         </View>
+                                    </View>
+
+                                    <View style={styles.section}>
+                                        <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
+                                        <MoviesHorizontalList movies={apiResult.similar.results} navigation={navigation}></MoviesHorizontalList>
+                                        {/* <CustomText>{JSON.stringify(apiResult.similar.results, null, 2)}</CustomText> */}
+                                    </View>
+
+                                    <View style={styles.section}>
+                                        <CustomText style={styles.sectionTitle}>External links</CustomText>
+                                        {/* <CustomText style={{color: 'white'}}>{JSON.stringify(apiResult.external_ids, null, 2)}</CustomText> */}
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.externalLinkContainer}>
+                                            
+                                            <Pressable onPress={() => handleExternalIdLink(null, apiResult.homepage)} style={styles.externalLink}>
+                                                <CustomText style={{color: Theme.colors.primaryDarker}}>Website</CustomText>
+                                            </Pressable>
+                                            
+                                            {Object.entries(apiResult.external_ids).map(([website, id]) => {
+                                                if (id !== null) {
+                                                    return (
+                                                        <Pressable key={website} onPress={() => handleExternalIdLink(website, id)} style={styles.externalLink}>
+                                                            <CustomText style={{color: Theme.colors.primaryDarker}}>{formatExternalIdKey(website)}</CustomText>
+                                                        </Pressable>
+                                                    )
+                                                }
+                                            })}
+
+                                        </ScrollView>
                                     </View>
                                 </View>
                             </View>
@@ -551,8 +648,22 @@ const styles = StyleSheet.create({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        // borderRadius: '100%',
+        // backgroundColor: Theme.colors.secondaryDarker
+    },
+    headerBtnImg: {
+        zIndex: 13,
+        height: 20,
+        width: 20
+    },
+    headerBtnBackground: {
+        zIndex: 12,
+        position: 'absolute',
+        height: '100%',
+        width: '100%',
         borderRadius: '100%',
-        backgroundColor: Theme.colors.secondaryDarker
+        backgroundColor: Theme.colors.secondaryDarker,
+        opacity: 0.5
     },
     headerBackground: {
         flex: 1,
@@ -577,13 +688,19 @@ const styles = StyleSheet.create({
     },
 
     backdrop: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        top: 0,
+        left: 0,
         height: 220,
     },
 
     content: {
         zIndex: 2,
+        marginTop: 170
         // paddingHorizontal: 15,
-        transform: [{ translateY: -50 }]
+        // transform: [{ translateY: -50 }] // Set the backdrop on absolute, and the content 
     },
 
     preview: {
@@ -593,6 +710,41 @@ const styles = StyleSheet.create({
         alignItems: 'end',
         justifyContent: 'space-between',
         marginVertical: 15,
+    },
+
+    overviewExpandableContainer: {
+        marginBottom: 10,
+        overflow: 'hidden'
+    },
+    overviewContainer: {
+        display: 'flex', 
+        flexDirection: 'row',
+        flexWrap: 'wrap'
+    },
+    tagline: {
+        fontWeight: 'bold',
+        marginBottom: 5
+    },
+    overview: {
+        height: '100%',
+        width: '100%' 
+    },
+
+    genreContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        marginBottom: 20
+    },
+    genre: {
+        marginRight: 5,
+        paddingHorizontal: 5,
+        paddingVertical: 2.5,
+        height: 25,
+        borderWidth: 1,
+        borderColor: Theme.colors.primaryDarker,
+        borderRadius: 2.5,
+        display: 'flex',
+        justifyContent: 'center'
     },
 
     infos: {
@@ -645,15 +797,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Theme.colors.secondary,
         borderRadius: 10,
+        backgroundColor: Theme.colors.secondaryDarker,
         marginLeft: 10
     },
 
-    sections: {
+    sectionContainer: {
         borderBottomWidth: 1,
         borderColor: Theme.colors.secondary,
         marginBottom: 25
     },
-    sectionContainer: {
+    section: {
         display: 'flex', 
         justifyContent: 'space-between',
         borderTopWidth: 1,
@@ -664,10 +817,10 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontWeight: 'bold',
         fontSize: 15.5,
-        marginBottom: 15
+        marginBottom: 10
     },
 
-    providersContainer: {
+    providerContainer: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center'
@@ -680,14 +833,14 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
 
-    reviewsContainer: {
+    reviewContainer: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        // marginTop: 5
+        marginTop: 5
     },
-    reviewsInfos: {
+    reviewInfos: {
         flex:1,
         marginRight: 15
     },
@@ -776,7 +929,7 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
 
-    figuresContainer: {
+    figureContainer: {
         height: 350,
         overflow: 'hidden'
     },
@@ -786,5 +939,19 @@ const styles = StyleSheet.create({
     },
     inactiveTabText: {
         color: Theme.colors.primaryDarker
-    }
+    },
+
+    externalLinkContainer: {
+        display: 'flex',
+        flexDirection: 'row'
+    },
+    externalLink: {
+        height: 30,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: Theme.colors.primaryDarker,
+        borderRadius: 2.5,
+        marginRight: 5
+    },
 })
