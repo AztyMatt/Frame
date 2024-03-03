@@ -7,13 +7,15 @@ const MoviesHorizontalList = ({ movies, navigation }) => {
 
     // Reset
     useEffect(() => {
-        scrollViewRef.current.scrollTo({ x: 0, animated: false })
+        return navigation.addListener('focus', () => {
+            scrollViewRef.current.scrollTo({ x: 0, animated: false })
+        })
     }, [movies])
 
     return (
         <ScrollView ref={scrollViewRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
             {movies.map((movie, index) => (
-                <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
+                <Pressable onPress={() => navigation.push('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
                     {movie.poster_path ? (
                         <Image
                             style={styles.poster}

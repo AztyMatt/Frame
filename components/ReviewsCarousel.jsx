@@ -5,7 +5,7 @@ import CustomText from './tags/CustomText.jsx'
 
 const screenWidth = Dimensions.get('window').width
 
-const ReviewsCarousel = ({ navigation, reviews }) => {
+const ReviewsCarousel = ({ reviews, navigation }) => {
     const scrollViewRef = useRef(null)
     const [activeIndex, setActiveIndex] = useState(0)
 
@@ -16,8 +16,10 @@ const ReviewsCarousel = ({ navigation, reviews }) => {
 
     // Reset
     useEffect(() => {
-        setActiveIndex(0)
-        scrollViewRef.current.scrollTo({ x: 0, animated: false })
+        return navigation.addListener('focus', () => {
+            setActiveIndex(0)
+            scrollViewRef.current.scrollTo({ x: 0, animated: false })
+        })
     }, [reviews])
 
     return (

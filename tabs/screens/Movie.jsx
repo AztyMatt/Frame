@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { LinearGradient } from 'expo-linear-gradient'
 import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
 import ReviewsCarousel from '../../components/ReviewsCarousel.jsx'
@@ -189,6 +189,21 @@ const Movie = ({ route, navigation }) => {
         setExpandedOverview(!expandedOverview)
     }
 
+    const setOverviewParams = () => { // To improve
+        // console.log('overviewHeight :', overviewHeight)
+        if (overviewHeight > 0) {
+            const isExpandable = overviewHeight > animatedOverviewHeight._value
+            setIsOverviewExpandable(isExpandable)
+            setExpandedOverview(!isExpandable)
+            animatedLinearGradientOpacity.setValue(isExpandable ? 1 : 0)
+            
+            // console.log(overviewHeight, animatedOverviewHeight._value)
+            // console.log('isOverviewExpandable ', isExpandable)
+            // console.log('ExpandedOverview ', !isExpandable)
+            // console.log('-----------------')
+        }
+    }
+
     // Cast Tabs
     const handleToggleTab = (tab) => {
         setSelectedTab(tab)
@@ -214,6 +229,14 @@ const Movie = ({ route, navigation }) => {
         }
         return closestPerson
     }
+
+    useEffect(() => {
+        setOverviewParams()
+
+        return navigation.addListener('focus', () => {
+            setOverviewParams()
+        })
+    }, [overviewHeight, animatedOverviewHeight])
     
     // Main
     useEffect(() => {
@@ -223,10 +246,12 @@ const Movie = ({ route, navigation }) => {
                 setApiResult(result)
 
                 // Reset
-                mainScrollViewRef.current.scrollTo({ y: 0, animated: false })
-                animatedOverviewHeight.setValue(maxOverviewHeight)
-                animatedLinearGradientOpacity.setValue(1)
-                setSelectedTab('cast')
+                return navigation.addListener('focus', () => {
+                    mainScrollViewRef.current.scrollTo({ y: 0, animated: false })
+                    animatedOverviewHeight.setValue(maxOverviewHeight)
+                    animatedLinearGradientOpacity.setValue(1)
+                    setSelectedTab('cast')
+                })
             } catch (error) {
                 // console.error('Error during API call:', error.message) // To fix
             }
@@ -245,11 +270,13 @@ const Movie = ({ route, navigation }) => {
     // formatted Data
     useEffect(() => { // To improve
         if (apiResult) {
+            // Trailer
             const trailer = apiResult.videos.results.find(
                 video => video.type === 'Trailer'
             )
             setTrailer(trailer)
 
+            // Providers
             const providers = apiResult['watch/providers'].results.US
                 ? apiResult['watch/providers'].results.US.rent
                     ? apiResult['watch/providers'].results.US.rent
@@ -257,26 +284,32 @@ const Movie = ({ route, navigation }) => {
                 : null
             setProviders(providers)
 
+            // Reviews
             const reviews = apiResult.reviews.results ? apiResult.reviews.results : null
             setReviews(reviews)
-    
-            const cast = apiResult.credits.cast.filter(
-                person => person.known_for_department === 'Acting'
-            )
 
+            // Director
             const director = apiResult.credits.crew.find(
                 person => person.job === 'Director'
             )
             setDirector(director)
     
-            // To improve
-            const filters = [
+
+            // Cast
+            const cast = apiResult.credits.cast.filter(
+                person => person.known_for_department === 'Acting'
+            )
+    
+            // Crew
+            const filters = [ // To improve
                 { department: 'Directing', job: 'Co-Director' },
                 { department: 'Production', job: 'Executive Producer' },
                 { department: 'Camera', job: 'Director of Photography' },
                 { department: 'Editing', job: 'Editor' },
                 { department: 'Writing', job: 'Screenplay' },
-                { department: 'Sound', job: 'Original Music Composer' } // Optionnal
+
+                { department: 'Sound', job: 'Original Music Composer' }
+                // Optionnal -> make a second list of filters if these one are not enough or if one is missing
             ] 
             let crew = []
 
@@ -297,29 +330,16 @@ const Movie = ({ route, navigation }) => {
                     }
                 }
 
-                if (!filteredPeople.includes(undefined)) {
+                if (filteredPeople && filteredPeople.length !== 0 && !filteredPeople.includes(undefined)) {
                     filteredPeople = [mostPopular(filteredPeople)]
                 
                     crew = [...crew, ...filteredPeople]
                 }
             }
+
             setFilteredFigures({ cast, crew })
         }
     }, [apiResult])
-
-    // Overview
-    useEffect(() => {
-        // console.log('overviewHeight :', overviewHeight)
-        if (overviewHeight > 0) {
-            const isExpandable = overviewHeight > animatedOverviewHeight._value
-            setIsOverviewExpandable(isExpandable)
-            setExpandedOverview(!isExpandable)
-            animatedLinearGradientOpacity.setValue(isExpandable ? 1 : 0)
-            // console.log(overviewHeight, animatedOverviewHeight._value)
-            // console.log('isOverviewExpandable ', isExpandable)
-            // console.log('ExpandedOverview ', !isExpandable)
-        }
-    }, [overviewHeight, animatedOverviewHeight])
 
     return (
         <>
@@ -530,7 +550,7 @@ const Movie = ({ route, navigation }) => {
                                             <View>
                                                 {/* <CustomText style={styles.sectionTitle}>Most rated review</CustomText> */}
                                                 {reviews && !reviews.length == 0 ? (
-                                                    <ReviewsCarousel reviews={reviews}/>  
+                                                    <ReviewsCarousel reviews={reviews} navigation={navigation}/>  
                                                 ) : (
                                                     <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
                                                 )}
@@ -569,7 +589,7 @@ const Movie = ({ route, navigation }) => {
                                                     <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                 </LinearGradient>
                                             </View>
-
+                                            
                                             <View>
                                                 <Figures
                                                     figures={filteredFigures[selectedTab]}
