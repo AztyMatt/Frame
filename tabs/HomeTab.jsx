@@ -7,9 +7,9 @@ const Stack = createStackNavigator()
 
 const HomeTab = () => {
     return (
-        <Stack.Navigator>
+        <Stack.Navigator initialRouteName='Movie'>
             <Stack.Screen name='Home' component={Home} options={{ headerShown: false }}/>
-            <Stack.Screen name='Movie' component={Movie} options={{ headerShown: false }}/>
+            <Stack.Screen name='Movie' component={Movie} initialParams={{ movieId: '335984' }} options={{ headerShown: false }}/>
         </Stack.Navigator>
     )
 }

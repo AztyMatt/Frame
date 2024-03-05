@@ -230,13 +230,13 @@ const Movie = ({ route, navigation }) => {
         return closestPerson
     }
 
-    useEffect(() => {
-        setOverviewParams()
-
-        return navigation.addListener('focus', () => {
-            setOverviewParams()
-        })
-    }, [overviewHeight, animatedOverviewHeight])
+    // Collection
+    function removeLastWord(input) {
+        let words = input.split(' ')
+        words.pop()
+      
+        return words.join(' ')
+      }
     
     // Main
     useEffect(() => {
@@ -267,7 +267,7 @@ const Movie = ({ route, navigation }) => {
 
     }, [movieId])
 
-    // formatted Data
+    // Formatted Data
     useEffect(() => { // To improve
         if (apiResult) {
             // Trailer
@@ -340,6 +340,15 @@ const Movie = ({ route, navigation }) => {
             setFilteredFigures({ cast, crew })
         }
     }, [apiResult])
+
+    // Reviews
+    useEffect(() => {
+        setOverviewParams()
+
+        return navigation.addListener('focus', () => {
+            setOverviewParams()
+        })
+    }, [overviewHeight, animatedOverviewHeight])
 
     return (
         <>
@@ -460,7 +469,7 @@ const Movie = ({ route, navigation }) => {
                                         </ScrollView>
                                     </View>
                                     
-                                    <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText>
+                                    {/* <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText> */}
                                     <View style={styles.sectionContainer}>
                                         <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                             <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
@@ -599,6 +608,39 @@ const Movie = ({ route, navigation }) => {
                                             </View>
                                         </View>
                                     </View>
+
+                                    {apiResult.belongs_to_collection ? (
+                                        <View style={styles.section}>
+                                            <CustomText style={styles.sectionTitle}>Belongs to this saga</CustomText>
+
+                                            <View style={styles.collectionContainer}>
+                                                <View style={styles.collection}>
+                                                    <CustomText style={styles.collectionTitle}>
+                                                        {removeLastWord(apiResult.belongs_to_collection.name)}
+                                                    </CustomText>
+                                                </View>
+
+                                                <View style={[styles.linearGradientContainer, { height: 150 }]}>
+                                                    <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                                        <View style={[styles.linearGradient, { height: 50 }]}></View>
+                                                    </LinearGradient>
+                                                </View>
+                                                {apiResult.belongs_to_collection.backdrop_path ? (
+                                                    <Image
+                                                        style={styles.backdrop}
+                                                        // resizeMode='contain'
+                                                        source={{
+                                                            uri: `https://image.tmdb.org/t/p/original/${apiResult.belongs_to_collection.backdrop_path}`,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                                )}
+                                            </View>
+                                        </View>
+                                    ) : (
+                                        null
+                                    )}
 
                                     <View style={styles.section}>
                                         <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
@@ -959,6 +1001,29 @@ const styles = StyleSheet.create({
     },
     inactiveTabText: {
         color: Theme.colors.primaryDarker
+    },
+
+    collectionContainer: {
+        height: 150,
+        borderWidth: 1,
+        borderColor: Theme.colors.primaryDarker,
+        borderRadius: 5,
+        overflow: 'hidden'
+    },
+    collection: {
+        zIndex: 2,
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+        padding: 10
+    },
+    collectionTitle: {
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: 20
     },
 
     externalLinkContainer: {
