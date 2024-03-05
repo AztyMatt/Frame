@@ -613,7 +613,7 @@ const Movie = ({ route, navigation }) => {
                                         <View style={styles.section}>
                                             <CustomText style={styles.sectionTitle}>Belongs to this saga</CustomText>
 
-                                            <View style={styles.collectionContainer}>
+                                            <Pressable onPress={() => navigation.navigate('Collection', { collectionId: apiResult.belongs_to_collection.id })} style={styles.collectionContainer}>
                                                 <View style={styles.collection}>
                                                     <CustomText style={styles.collectionTitle}>
                                                         {removeLastWord(apiResult.belongs_to_collection.name)}
@@ -636,7 +636,7 @@ const Movie = ({ route, navigation }) => {
                                                 ) : (
                                                     <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
                                                 )}
-                                            </View>
+                                            </Pressable>
                                         </View>
                                     ) : (
                                         null
