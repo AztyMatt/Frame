@@ -3,9 +3,9 @@ import { StyleSheet, View, Image } from 'react-native'
 import Theme from '../assets/styles.js'
 import CustomText from './tags/CustomText'
 
-const Figures = ({ figures, figuresVisible, selectedTab }) => {
+const Figures = ({figures, figuresVisible, selectedTab}) => {
     return (
-        <View>
+        <>
             {figures && figures.slice(0, figuresVisible).map((figure, index) => (
                 figure ? (
                     <View key={index} style={styles.figureContainer}>
@@ -41,7 +41,7 @@ const Figures = ({ figures, figuresVisible, selectedTab }) => {
                     null
                 )
             ))}
-        </View>
+        </>
     )
 }
 export default Figures
