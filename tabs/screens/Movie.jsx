@@ -520,9 +520,9 @@ const Movie = ({ route, navigation }) => {
                                                     <View style={{ marginBottom: 7.5}}>
                                                         <CustomText>
                                                             {/* {'( '} */}
-                                                            <CustomText style={styles.detailsTitle}>{formatThousands(apiResult.vote_count)}</CustomText>
+                                                            <CustomText style={styles.reviewDetails}>{formatThousands(apiResult.vote_count)}</CustomText>
                                                             {' ratings - '}
-                                                            <CustomText style={styles.detailsTitle}>{`${formatNote(apiResult.vote_average)}★`}</CustomText>
+                                                            <CustomText style={styles.reviewDetails}>{`${formatNote(apiResult.vote_average)}/10 ★`}</CustomText>
                                                             {/* {' )'} */}
                                                         </CustomText>
                                                     </View>
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
     },
     headerBtn: {
         height: 40,
-        width: '10%',
+        width: 40,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -921,6 +921,9 @@ const styles = StyleSheet.create({
         flex:1,
         marginRight: 15
     },
+    reviewDetails: {
+        fontWeight: 'bold'
+    },
 
     ratingContainer: {
         display: 'flex',
@@ -1016,36 +1019,6 @@ const styles = StyleSheet.create({
     },
     inactiveTabText: {
         color: Theme.colors.primaryDarker
-    },
-
-    detailContainer: {
-        marginBottom: 30
-    },
-    detailTitleContainer: {
-        paddingBottom: 7.5,
-        marginTop: 5,
-        borderBottomWidth: 1,
-        borderColor: Theme.colors.primaryDarker,
-        borderBottomRightRadius: 5
-    },
-    detailTitle: {
-        fontWeight: 'bold'
-    },
-    detailItem: {
-        height: 40,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        // marginVertical: 5,
-        borderBottomWidth: 1,
-        borderColor: Theme.colors.primaryDarker,
-        borderBottomRightRadius: 5
-    },
-    detailArrowContainer: {     
-        width: '10%',
-        display: 'flex',
-        alignItems: 'center'
     },
 
     collectionContainer: {

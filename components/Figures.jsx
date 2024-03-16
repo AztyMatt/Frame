@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
     },
 
     figureInfos: {
-        width: '90%',
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center'
@@ -73,7 +72,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 5
     },
     figureArrowContainer: {
-        width: '10%',
+        width: 40,
         display: 'flex',
         alignItems: 'center'
     }

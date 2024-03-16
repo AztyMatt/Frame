@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 5
     },
     detailArrowContainer: {     
-        width: '10%',
+        width: 40,
         display: 'flex',
         alignItems: 'center'
     }
