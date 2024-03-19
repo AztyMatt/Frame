@@ -12,16 +12,17 @@ const ReviewsCarousel = ({ reviews, navigation }) => {
 
     // Fonctions
     const capitalizeFirstLetter = (word) => {
-        return word.slice(0, 1).toUpperCase() + word.slice(1);
+        return word.slice(0, 1).toUpperCase() + word.slice(1)
     }
 
     const formatWords = (content) => { //Needs to be improved for _ or * alone !
         const symbols = [
             {startSymbol: '_', endSymbol: '_', style: {fontStyle: 'italic'}},
+            {startSymbol: '***', endSymbol: '***', style: {fontWeight: 'bold', fontSize: 15.5 }},
             {startSymbol: '**', endSymbol: '**', style: {fontWeight: 'bold'}},
             {startSymbol: '<em>', endSymbol: '</em>', style: {fontStyle: 'italic', fontWeight: 'bold'}},
         ]
-        const regex = /(_[^_]+_)|(\*\*[^**]+\*\*)|(<em>[^.]+<\/em>)/g
+        const regex = /(_[^_]+_)|(\*\*\*[^***]+\*\*\*)|(\*\*[^**]+\*\*)|(<em>[^.]+<\/em>)/g
 
         for (const symbol of symbols) {
             styles[symbol.startSymbol] = symbol.style
@@ -47,10 +48,15 @@ const ReviewsCarousel = ({ reviews, navigation }) => {
     }
 
     const formatUrl = (url) => {
-        const regex = /^(?:https?:\/\/)?(?:www\.)?([^\/\n]+?)(?:\.\w+)+(?=\.|$)/
-        const [websiteUrl, websiteName] = url.match(regex)
+        const regex = /^(?:https?:\/\/)?(?:www\.)?([^\/\n]+)(?:\/|$)/
+        const match = url.match(regex)
 
-        return [{'string': websiteName, 'url': url}]
+        if (match) {
+            const [websiteUrl, websiteName] = match
+            return [{'string': websiteName, 'url': url}]
+        } else {
+            return [{'string': null, 'url': 'Unvalid website'}]
+        }
     }
 
     const formatContent = (content) => {
