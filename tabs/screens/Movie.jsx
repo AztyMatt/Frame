@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -13,7 +13,7 @@ import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
 
 import { api } from '../../services/api.js'
 
-const externalIdLinks = {
+const websites = {
     imdb_id: 'https://www.imdb.com/title/',
     wikidata_id: 'https://www.wikidata.org/wiki/',
     facebook_id: 'https://www.facebook.com/',
@@ -22,18 +22,18 @@ const externalIdLinks = {
 }
 
 const Movie = ({ route, navigation }) => {
+    /**
+     * useStates
+     */
+    // Main
     const { movieId } = route.params
-    const [apiResult, setApiResult] = useState(null)
+    const [data, setApiResult] = useState(null)
     const [onWatchlist, setOnWatchlist] = useState(false)
-    const [details, setDetails] = useState(null)
 
-    const [trailer, setTrailer] = useState([])
-    const [providers, setProviders] = useState([])
-    const [filteredFigures, setFilteredFigures] = useState([])
-    const [director, setDirector] = useState([])
-
+    // Header
     const HeaderScrollY = useState(new Animated.Value(0))[0]
 
+    // Overview
     const maxOverviewHeight = 110
     const [expandedOverview, setExpandedOverview] = useState(false)
     const [isOverviewExpandable, setIsOverviewExpandable] = useState(true)
@@ -41,14 +41,43 @@ const Movie = ({ route, navigation }) => {
     const animatedOverviewHeight= useState(new Animated.Value(maxOverviewHeight))[0]
     const animatedLinearGradientOpacity = useState(new Animated.Value(1))[0]
 
-    const [reviews, setReviews] = useState(null)
-
+    // Figures
     const [figuresVisible, setFiguresVisible] = useState(6)
     const [selectedTab, setSelectedTab] = useState('cast')
 
+    /**
+     * useRefs
+     */
     // Main
     const mainScrollViewRef = useRef()
 
+    /**
+     * Functions
+     */
+    // Generic formatting -> Needs to be moved in a generic component of formatting
+    const formatDate = (date) => {
+        return new Date(date).getFullYear()
+    }
+
+    const formatDuration = (duration) => {
+        const hours = Math.floor(duration / 60)
+        const minutes = duration % 60
+
+        const hoursFormat = hours < 10 ? `0${hours}` : `${hours}`
+        const minutesFormat = minutes < 10 ? `0${minutes}` : `${minutes}`
+
+        return `${hoursFormat}h${minutesFormat}`
+    }
+
+    const formatNote = (note) => {
+        return Math.floor(note * 10) / 10
+    }
+
+    const formatThousands = (number) => {
+        return number.toLocaleString('en-US')
+    }
+
+    // Watchlist
     const isOnWatchlist = async () => {
         const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
         const parsedWatchlist = storagedWatchlist ? JSON.parse(storagedWatchlist) : []
@@ -67,61 +96,23 @@ const Movie = ({ route, navigation }) => {
             } else {
                 const newMovie = {
                     id: movieId,
-                    poster_path: apiResult.poster_path,
+                    poster_path: data.poster_path,
                 }
                 parsedWatchlist.push(newMovie)
                 setOnWatchlist(true)
             }
-      
+    
             await AsyncStorage.setItem('@userWatchlist', JSON.stringify(parsedWatchlist))
         } catch (error) {
-          // console.error('Error updating watchlist:', error)
+        // console.error('Error updating watchlist:', error)
         }
     }
 
-    // Formatted Data
-    const formatReleaseDate = () => {
-        return new Date(apiResult.release_date).getFullYear()
-    }
-
-    const formatDate = (date) => {
-        const dateFormatted = new Date(date)
-        return dateFormatted.toLocaleDateString('en-US')
-    }
-
-    const formatDuration = (duration) => {
-        const hours = Math.floor(duration / 60)
-        const minutes = duration % 60
-
-        const hoursFormat = hours < 10 ? `0${hours}` : `${hours}`
-        const minutesFormat = minutes < 10 ? `0${minutes}` : `${minutes}`
-
-        return `${hoursFormat}h${minutesFormat}`
-    }
-
-    const handleTrailerLink = (trailer) => { // Needs to be improved (if ?, directly pass trailer.key as parameter ?, change styles of btn if trailer null ?)
-        trailer ? (
-            Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
-        ) : (
-            // console.log('No trailer found')
-            null
-        )
-    }
-
-    const formatNote = (note) => {
-        return Math.floor(note * 10) / 10
-    }
-
-    const formatThousands = (note) => {
-        return note.toLocaleString('en-US')
-    }
-
-    const formatExternalIdKey = (key) => {
-        return key.charAt(0).toUpperCase() + key.slice(1).replace('_id', '')
-    }
-
-    const handleExternalIdLink = (website, id) => {
-        const url = website && externalIdLinks[website] ? `${externalIdLinks[website]}${id}` : `${id}`
+    // Handlers
+    const handleWebsites = (website, id) => {
+        const url = website && websites[website]
+            ? `${websites[website]}${id}`
+            : id
         Linking.openURL(url)
     }
 
@@ -134,6 +125,15 @@ const Movie = ({ route, navigation }) => {
     //     }
     // }
 
+    const handleTrailerLink = (trailer) => { // Needs to be improved (if ?, directly pass trailer.key as parameter ?, change styles of btn if trailer null ?)
+        trailer ? (
+            Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
+        ) : (
+            // console.log('No trailer found')
+            null
+        )
+    }
+
     // Header
     const handleScroll = Animated.event(
         [{ 
@@ -143,9 +143,9 @@ const Movie = ({ route, navigation }) => {
                 }
             } 
         }],
-      { useNativeDriver: false }
+    { useNativeDriver: false }
     )
-  
+
     const animatedHeaderOpacity = HeaderScrollY.interpolate({
         inputRange: [100, 150],
         outputRange: [0, 1],
@@ -192,7 +192,7 @@ const Movie = ({ route, navigation }) => {
         setExpandedOverview(!expandedOverview)
     }
 
-    const setOverviewParams = () => { // To improve
+    const setOverviewParams = () => { // -> Needs to be improved
         // console.log('overviewHeight :', overviewHeight)
         if (overviewHeight > 0) {
             const isExpandable = overviewHeight > animatedOverviewHeight._value
@@ -217,7 +217,7 @@ const Movie = ({ route, navigation }) => {
     }
     // A useEffect may be needed if you can acces other movie on this screen
 
-    function mostPopular(people) {
+    const mostPopular = (people) => {
         let closestPerson = null
         let closestDifference = Infinity
         
@@ -235,13 +235,16 @@ const Movie = ({ route, navigation }) => {
     }
 
     // Collection
-    function removeLastWord(input) {
+    const removeLastWord = (input) => {
         let words = input.split(' ')
         words.pop()
-      
+    
         return words.join(' ')
     }
     
+    /**
+     * UseEffects
+     */
     // Main
     useEffect(() => {
         const fetchData = async () => {
@@ -271,88 +274,6 @@ const Movie = ({ route, navigation }) => {
 
     }, [movieId])
 
-    // Formatted Data
-    useEffect(() => { // To improve
-        if (apiResult) {
-            // Trailer
-            const trailer = apiResult.videos.results.find(
-                video => video.type === 'Trailer'
-            )
-            setTrailer(trailer)
-
-            // Providers
-            const providers = apiResult['watch/providers'].results.US
-                ? apiResult['watch/providers'].results.US.rent
-                    ? apiResult['watch/providers'].results.US.rent
-                    : apiResult['watch/providers'].results.US.buy
-                : null
-            setProviders(providers)
-
-            // Reviews
-            const reviews = apiResult.reviews.results ? apiResult.reviews.results : null
-            setReviews(reviews)
-
-            // Director
-            const director = apiResult.credits.crew.find(
-                person => person.job === 'Director'
-            )
-            setDirector(director)
-    
-
-            // Cast
-            const cast = apiResult.credits.cast
-
-            // Crew
-            const filters = [ // To improve
-                { department: 'Directing', job: 'Co-Director' },
-                { department: 'Production', job: 'Executive Producer' },
-                { department: 'Camera', job: 'Director of Photography' },
-                { department: 'Editing', job: 'Editor' },
-                { department: 'Writing', job: 'Screenplay' },
-
-                { department: 'Sound', job: 'Original Music Composer' },
-                { department: 'Art', job: 'Supervising Art Director'}
-                // Optionnal -> make a second list of filters if these one are not enough or if one is missing
-            ] 
-            let crew = []
-
-            if (director) {
-                crew.unshift(director)
-            }
-            
-            for (const { department, job } of filters) {
-                let filteredPeople = apiResult.credits.crew.filter(
-                    person => person.department === department && person.job === job
-                )
-
-                if (filteredPeople.length === 0) {
-                    filteredPeople = apiResult.credits.crew.filter(person => person.department === department)
-
-                    if (department === 'Directing' && director) {
-                        filteredPeople = filteredPeople.filter(person => person !== director)
-                    }
-                }
-
-                if (filteredPeople && filteredPeople.length !== 0 && !filteredPeople.includes(undefined)) {
-                    filteredPeople = [mostPopular(filteredPeople)]
-                
-                    crew = [...crew, ...filteredPeople]
-                }
-            }
-
-            setFilteredFigures({ cast, crew })
-
-            const { original_title, spoken_languages, production_countries, production_companies, budget, revenue } = apiResult
-
-            const language = languages.find(
-                language => language.iso_639_1 === apiResult.original_language
-            )
-            const original_language = new Array(language)
-
-            setDetails({ original_title, original_language, production_companies, spoken_languages, production_countries, budget, revenue })
-        }
-    }, [apiResult])
-
     // Reviews
     useEffect(() => {
         setOverviewParams()
@@ -362,10 +283,156 @@ const Movie = ({ route, navigation }) => {
         })
     }, [overviewHeight, animatedOverviewHeight])
 
+    /**
+     * UseMemos
+     */
+    // Formatted Data -> Needs to be improved
+    const formattedData = useMemo(() => {
+        if (!data) return {}
+
+        // Generic formatting
+        const releaseDate = formatDate(data.release_date)
+        const duration = formatDuration(data.runtime)
+        const note = formatNote(data.vote_average)
+        const votes = formatThousands(data.vote_count)
+
+        /**
+         * Specific formatting
+         */
+        // Trailer
+        const formatTrailer = () => {
+            return data.videos.results.find(
+                video => video.type === 'Trailer'
+            )
+        }
+        const trailer = formatTrailer()
+
+        // Providers
+        const formatProviders = () => {
+            const providers = data['watch/providers'].results.US
+
+            return providers
+                ? providers.rent
+                    ? providers.rent
+                    : providers.buy
+                : null
+        }
+        const providers = formatProviders()
+
+        // Director
+        const formatDirector = () => {
+            return data.credits.crew.find(
+                person => person.job === 'Director'
+            )
+        }
+        const director = formatDirector()
+
+        // Figures
+        const formatFigures = () => {
+            const cast = data.credits.cast
+            const crew = data.credits.crew
+
+            const filters = [
+                { department: 'Directing', job: 'Co-Director' },
+                { department: 'Production', job: 'Executive Producer' },
+                { department: 'Camera', job: 'Director of Photography' },
+                { department: 'Editing', job: 'Editor' },
+                { department: 'Writing', job: 'Screenplay' },
+                
+                { department: 'Sound', job: 'Original Music Composer' },
+                { department: 'Art', job: 'Supervising Art Director'}
+                // Optionnal -> Make a second list of filters if these one are not enough or if one is missing
+            ]
+            let filteredCrew = []
+
+            if (director) {
+                filteredCrew.unshift(director)
+            }
+    
+            for (const { department, job } of filters) {
+                let filteredPeople = crew.filter(
+                    person => person.department === department && person.job === job
+                )
+    
+                if (filteredPeople.length === 0) {
+                    filteredPeople = crew.filter(person => person.department === department)
+    
+                    if (department === 'Directing' && director) {
+                        filteredPeople = filteredPeople.filter(person => person !== director)
+                    }
+                }
+    
+                if (filteredPeople.length !== 0 && !filteredPeople.includes(undefined)) {
+                    filteredPeople = [mostPopular(filteredPeople)]
+                    filteredCrew = [...filteredCrew, ...filteredPeople]
+                }
+            }
+
+            return { cast, crew }
+        }
+        const figures = formatFigures()
+
+        // Details
+        const formatDetails = () => {
+            const { original_title, spoken_languages, production_countries, production_companies, budget, revenue } = data
+
+            const language = languages.find(
+                language => language.iso_639_1 === data.original_language
+            )
+            const original_language = [language]
+
+            return { original_title, original_language, production_companies, spoken_languages, production_countries, budget, revenue }
+        }
+        const details = formatDetails()
+
+        // Similar movies
+        const formatSimilarMovies = () => {
+            return data.similar.results.length > 0 ? data.similar.results : null
+        }
+        const similarMovies = formatSimilarMovies()
+
+        // Websites
+        const formatWebsites = () => {
+            let websitesFormatted = []
+
+            for (const website in data.external_ids) {
+                const id = data.external_ids[website]
+
+                if (id !== null) {
+                    const websiteFormatted = {
+                        website,
+                        name: website.charAt(0).toUpperCase() + website.slice(1).replace('_id', ''),
+                        id
+                    }
+
+                    websitesFormatted.push(websiteFormatted)
+                }
+            }
+            return websitesFormatted.length > 0 ? websitesFormatted : null
+        }
+        const websites = formatWebsites()
+
+        // Return
+        return {
+            releaseDate,
+            duration,
+            note,
+            votes,
+
+            trailer,
+            providers,
+            director,
+            figures,
+            details,
+            similarMovies,
+            websites
+        }
+    }, [data])
+
     return (
         <>
             <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
-            {apiResult ? (
+            {data ? (
                 <View style={styles.container}>
                     <View style={styles.headerContainer}>
                         <View style={styles.header}>
@@ -377,7 +444,7 @@ const Movie = ({ route, navigation }) => {
                                 <View style={styles.headerBtnBackground}></View>
                             </Pressable>
                             <Animated.View style={{flex: 1, opacity: animatedHeaderTitleOpacity}}>
-                                <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ apiResult.title }</CustomText>
+                                <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ data.title }</CustomText>
                             </Animated.View>
                             <Pressable onPress={() => manageWatchlist()} style={styles.headerBtn}>
                                 <Image
@@ -400,16 +467,16 @@ const Movie = ({ route, navigation }) => {
                                         <View style={[styles.linearGradient, { height: 100 }]}></View>
                                     </LinearGradient>
                                 </View>
-                                {apiResult.backdrop_path ? (
+                                {data.backdrop_path ? (
                                     <Image
                                         style={styles.backdrop}
                                         // resizeMode='contain'
                                         source={{
-                                            uri: `https://image.tmdb.org/t/p/original/${apiResult.backdrop_path}`,
+                                            uri: `https://image.tmdb.org/t/p/original/${data.backdrop_path}`,
                                         }}
                                     />
                                 ) : (
-                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                    <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image (component)
                                 )}
                             </View>
 
@@ -418,20 +485,20 @@ const Movie = ({ route, navigation }) => {
                                     <View style={styles.preview}>
                                         <View style={styles.infos}>
                                             <Animated.View style={[styles.titleContainer, {opacity: Animated.subtract(1, animatedHeaderOpacity)}]}>
-                                                <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ apiResult.title }</CustomText>
+                                                <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ data.title }</CustomText>
                                             </Animated.View>
 
                                             <View style={styles.details}>
                                                 <View>
                                                     <View style={styles.directorContainer}>
-                                                        <CustomText>{ formatReleaseDate(apiResult.release_date) }</CustomText>
+                                                        <CustomText>{ formattedData.releaseDate }</CustomText>
                                                         <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
                                                     </View>
                                                     <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                                        {director ? (
-                                                            director.name
+                                                        {formattedData.director ? (
+                                                            formattedData.director.name
                                                         ) : (
-                                                            'Unknow'
+                                                            'Unknow director'
                                                         )}
                                                     </CustomText>
                                                 </View>
@@ -440,21 +507,21 @@ const Movie = ({ route, navigation }) => {
                                                     <Pressable onPress={() => handleTrailerLink(trailer)} style={styles.trailerBtn}>
                                                         <CustomText> ► TRAILER </CustomText>
                                                     </Pressable>
-                                                    <CustomText style={{ marginLeft: 10 }}>{ formatDuration(apiResult.runtime) }</CustomText>
+                                                    <CustomText style={{ marginLeft: 10 }}>{ formattedData.duration }</CustomText>
                                                 </View>
                                             </View>
                                         </View>
 
-                                        {apiResult.poster_path ? (
+                                        {data.poster_path ? (
                                             <Image
                                                 style={styles.poster}
                                                 resizeMode='contain'
                                                 source={{
-                                                    uri: `https://image.tmdb.org/t/p/original/${apiResult.poster_path}`,
+                                                    uri: `https://image.tmdb.org/t/p/original/${data.poster_path}`,
                                                 }}
                                             />
                                         ) : (
-                                            <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                            <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
                                         )}
                                     </View>
                                     
@@ -466,14 +533,14 @@ const Movie = ({ route, navigation }) => {
                                                 </LinearGradient>
                                             </Animated.View>
                                             <View onLayout={onLayout} style={styles.overviewContainer}>
-                                                <CustomText style={styles.tagline}>{apiResult.tagline}</CustomText>
-                                                <CustomText style={styles.overview}>{apiResult.overview}</CustomText>
+                                                <CustomText style={styles.tagline}>{data.tagline}</CustomText>
+                                                <CustomText style={styles.overview}>{data.overview}</CustomText>
                                             </View>
                                         </Animated.View>
                                     </Pressable>
 
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
-                                        {apiResult && apiResult.genres.map((genre, index) => (
+                                        {data && data.genres.map((genre, index) => (
                                             <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index} style={styles.genre}>
                                                 <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
                                             </Pressable>
@@ -481,15 +548,15 @@ const Movie = ({ route, navigation }) => {
                                     </ScrollView>
                                 </View>
                                 
-                                {/* <CustomText>{JSON.stringify(apiResult.id, null, 2)}</CustomText> */}
+                                <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText>
                                 <View style={styles.sectionContainer}>
                                     <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                         <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
-                                        {providers ? (
+                                        {formattedData.providers ? (
                                             <View style={styles.providerContainer}>
                                                 <View style={styles.providerContainer}>
-                                                    {providers && providers.slice(0, 5).map((provider, index) => (
-                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: apiResult.id })} key={index} style={{ marginRight: 5 }}>
+                                                    {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
+                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
                                                             {provider.logo_path ? (
                                                                 <Image
                                                                     style={styles.provider}
@@ -499,7 +566,7 @@ const Movie = ({ route, navigation }) => {
                                                                     }}
                                                                 />
                                                             ) : (
-                                                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be replace by a better skeleton
+                                                                <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
                                                             )}
                                                         </Pressable>
                                                     ))}
@@ -507,7 +574,7 @@ const Movie = ({ route, navigation }) => {
                                                 <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
                                             </View>
                                         ) : (
-                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable</CustomText>
+                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
                                         )}
                                     </View>
 
@@ -520,9 +587,9 @@ const Movie = ({ route, navigation }) => {
                                                     <View style={{ marginBottom: 7.5}}>
                                                         <CustomText>
                                                             {/* {'( '} */}
-                                                            <CustomText style={styles.reviewDetails}>{formatThousands(apiResult.vote_count)}</CustomText>
+                                                            <CustomText style={styles.reviewDetails}>{ formattedData.votes }</CustomText>
                                                             {' ratings - '}
-                                                            <CustomText style={styles.reviewDetails}>{`${formatNote(apiResult.vote_average)}/10 ★`}</CustomText>
+                                                            <CustomText style={styles.reviewDetails}>{`${formattedData.note}/10 ★`}</CustomText>
                                                             {/* {' )'} */}
                                                         </CustomText>
                                                     </View>
@@ -535,12 +602,12 @@ const Movie = ({ route, navigation }) => {
                                                             </View>
 
                                                             <View style={styles.ratingBarContainer}>
-                                                                <View style={[styles.ratingBar, {width: `${(formatNote(apiResult.vote_average) / 10) * 100}%`}]}>
+                                                                <View style={[styles.ratingBar, {width: `${(formattedData.note / 10) * 100}%`}]}>
                                                                     <Text
                                                                         aria-label=''
                                                                         style={styles.ratingBarText}
                                                                     >
-                                                                        {'/////////////////////' /* Needs to be edited for larger screens */}
+                                                                        {'/////////////////////' /* -> Needs to be edited for larger screens */}
                                                                     </Text>
                                                                 </View>
                                                             </View>
@@ -552,7 +619,7 @@ const Movie = ({ route, navigation }) => {
                                                         </View>
                                                     </View>
                                                 </View>
-                                                <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: apiResult.id })} style={styles.reviewBtn}>
+                                                <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
                                                     <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
                                                     <Image
                                                         style={styles.reviewImg}
@@ -569,21 +636,13 @@ const Movie = ({ route, navigation }) => {
                                         <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
 
                                         <View>
-                                            {/* <CustomText style={styles.sectionTitle}>Most rated review</CustomText> */}
-                                            {reviews && !reviews.length == 0 ? (
-                                                <ReviewsCarousel reviews={reviews} navigation={navigation}/>  
+                                            {!data.reviews.results.length == 0 ? (
+                                                <ReviewsCarousel reviews={data.reviews.results} navigation={navigation}/>  
                                             ) : (
                                                 <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
                                             )}
                                         </View>
                                     </View>
-
-                                    {/* <View style={styles.section}>
-                                        <CustomText style={styles.sectionTitle}>Ratings</CustomText>
-                                        <CustomText>
-                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ac justo eu libero vulputate ullamcorper. Sed gravida nunc vitae risus eleifend, vel tempus justo tristique. Vivamus et accumsan elit.
-                                        </CustomText>
-                                    </View> */}
                                 </View>
                                 
                                 <View style={{paddingHorizontal: 15}}>
@@ -613,26 +672,24 @@ const Movie = ({ route, navigation }) => {
                                         
                                         {selectedTab === 'crew' || selectedTab === 'cast' ? (
                                             <Figures
-                                                figures={filteredFigures[selectedTab]}
+                                                figures={formattedData.figures[selectedTab]}
                                                 selectedTab={selectedTab}
                                                 figuresVisible={figuresVisible}
                                             />
                                         ) : (
-                                            <Details details={details}></Details>
+                                            <Details details={formattedData.details}></Details>
                                         )}
                                     </View>
                                 </View>
 
-                                {/* <CustomText style={{color: 'white'}}>{JSON.stringify(apiResult.credits.crew, null, 2)}</CustomText> */}
-
-                                {apiResult.belongs_to_collection ? (
+                                {data.belongs_to_collection ? (
                                     <View style={styles.section}>
                                         <CustomText style={styles.sectionTitle}>Belongs to this saga</CustomText>
 
-                                        <Pressable onPress={() => navigation.navigate('Collection', { collectionId: apiResult.belongs_to_collection.id })} style={styles.collectionContainer}>
+                                        <Pressable onPress={() => navigation.navigate('Collection', { collectionId: data.belongs_to_collection.id })} style={styles.collectionContainer}>
                                             <View style={styles.collection}>
                                                 <CustomText style={styles.collectionTitle}>
-                                                    {removeLastWord(apiResult.belongs_to_collection.name)}
+                                                    {removeLastWord(data.belongs_to_collection.name)}
                                                 </CustomText>
                                             </View>
 
@@ -641,16 +698,16 @@ const Movie = ({ route, navigation }) => {
                                                     <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                 </LinearGradient>
                                             </View>
-                                            {apiResult.belongs_to_collection.backdrop_path ? (
+                                            {data.belongs_to_collection.backdrop_path ? (
                                                 <Image
                                                     style={styles.backdrop}
                                                     // resizeMode='contain'
                                                     source={{
-                                                        uri: `https://image.tmdb.org/t/p/original/${apiResult.belongs_to_collection.backdrop_path}`,
+                                                        uri: `https://image.tmdb.org/t/p/original/${data.belongs_to_collection.backdrop_path}`,
                                                     }}
                                                 />
                                             ) : (
-                                                <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be a default image
+                                                <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
                                             )}
                                         </Pressable>
                                     </View>
@@ -658,32 +715,38 @@ const Movie = ({ route, navigation }) => {
                                     null
                                 )}
 
-                                <View style={styles.section}>
-                                    <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
-                                    <MoviesHorizontalList movies={apiResult.similar.results} navigation={navigation}></MoviesHorizontalList>
-                                </View>
+                                {formattedData.similarMovies ? (
+                                    <View style={styles.section}>
+                                        <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
+                                        <MoviesHorizontalList movies={formattedData.similarMovies} navigation={navigation}></MoviesHorizontalList>
+                                    </View>
+                                ) : (
+                                    null
+                                )}
 
-                                <View style={styles.section}>
-                                    <CustomText style={styles.sectionTitle}>External links</CustomText>
+                                {formattedData.websites ? (
+                                    <View style={styles.section}>
+                                        <CustomText style={styles.sectionTitle}>External links</CustomText>
 
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.externalLinkContainer}>
-                                        
-                                        <Pressable onPress={() => handleExternalIdLink(null, apiResult.homepage)} style={styles.externalLink}>
-                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Website</CustomText>
-                                        </Pressable>
-                                        
-                                        {Object.entries(apiResult.external_ids).map(([website, id]) => {
-                                            if (id !== null) {
-                                                return (
-                                                    <Pressable key={website} onPress={() => handleExternalIdLink(website, id)} style={styles.externalLink}>
-                                                        <CustomText style={{color: Theme.colors.primaryDarker}}>{formatExternalIdKey(website)}</CustomText>
-                                                    </Pressable>
-                                                )
-                                            }
-                                        })}
-
-                                    </ScrollView>
-                                </View>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.externalLinkContainer}>
+                                            {data.homepage ? (
+                                                <Pressable onPress={() => handleWebsites(null, data.homepage)} style={styles.externalLink}>
+                                                    <CustomText style={{color: Theme.colors.primaryDarker}}>Website</CustomText>
+                                                </Pressable>
+                                            ) : (
+                                                null
+                                            )}
+                                            
+                                            {formattedData.websites.map((website, index) => (
+                                                <Pressable key={index} onPress={() => handleWebsites(website.website, website.id)} style={styles.externalLink}>
+                                                    <CustomText style={{color: Theme.colors.primaryDarker}}>{website.name}</CustomText>
+                                                </Pressable>
+                                            ))}
+                                        </ScrollView>
+                                    </View>
+                                ) : (
+                                    null
+                                )}
                             </View>
                         </View>
                     </ScrollView>
@@ -870,7 +933,7 @@ const styles = StyleSheet.create({
 
     poster: {
         height: '100%',
-        width: 120, // Needs to be improve
+        width: 120, // -> Needs to be improved
         borderWidth: 1,
         borderColor: Theme.colors.secondary,
         borderRadius: 10,
