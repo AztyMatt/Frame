@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
+import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { LinearGradient } from 'expo-linear-gradient'
+import { formatReleaseDate, handleTrailerLink } from '../../utils.js'
 import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
 import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
@@ -18,16 +19,7 @@ const Home = () => {
     const [firstUpcoming, setFirstUpcoming] = useState(null)
     const [watchlist, setWatchlist] = useState([])
 
-    function formatReleaseDate(date) {
-        const year = date.getFullYear()
-        const month = (date.getMonth() + 1).toString().padStart(2, '0')
-        const day = date.getDate().toString().padStart(2, '0')
-      
-        const formattedDate = `${year}-${month}-${day}`
-        return formattedDate
-    }
-
-    const handleLinkPress = (id) => {
+    const handleMainTrailerLink = (id) => {
         const fetchVideos = async () => {
             try {
                 const result = await api(`/movie/${id}/videos?language=en-US`) //%2Crelease_dates
@@ -35,12 +27,7 @@ const Home = () => {
                     video => video.type === 'Trailer'
                 )
 
-                trailer ? (
-                    Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
-                ) : (
-                    // console.log('No trailer found')
-                    null
-                )
+                handleTrailerLink(trailer)
             } catch (error) {
                 // console.error('Error during API call:', error.message)
             }
@@ -120,7 +107,7 @@ const Home = () => {
                                         <CustomText numberOfLines={1} ellipsizeMode='tail' style={styles.title}>{ firstUpcoming.title }</CustomText>
                                     </View>
                                 </View>
-                                <Pressable onPress={() => handleLinkPress(firstUpcoming.id)} style={[styles.trailerButton, {backgroundColor: Theme.colors.secondaryDarker }]}>
+                                <Pressable onPress={() => handleMainTrailerLink(firstUpcoming.id)} style={[styles.trailerButton, {backgroundColor: Theme.colors.secondaryDarker }]}>
                                     <CustomText> ► TRAILER </CustomText>
                                 </Pressable>
                             </View>

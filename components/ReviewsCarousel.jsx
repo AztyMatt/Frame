@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Dimensions, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { capitalizeFirstLetter } from '../utils.js'
 import Theme from '../assets/styles.js'
 import CustomText from './tags/CustomText.jsx'
 
@@ -11,10 +12,6 @@ const ReviewsCarousel = ({ reviews, navigation }) => {
     const [activeIndex, setActiveIndex] = useState(0)
 
     // Fonctions
-    const capitalizeFirstLetter = (word) => {
-        return word.slice(0, 1).toUpperCase() + word.slice(1)
-    }
-
     const formatWords = (content) => { //Needs to be improved for _ or * alone !
         const symbols = [
             {startSymbol: '_', endSymbol: '_', style: {fontStyle: 'italic'}},

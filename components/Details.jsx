@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
+import { formatThousands } from '../utils.js'
 import Theme from '../assets/styles.js'
 import CustomText from './tags/CustomText'
 
 const Details = ({details}) => {
-    const formatThousands = (note) => {
-        return note.toLocaleString('en-US')
-    }
-
     const formatTitle = (title) => {
         return title.split('_').join(' ').toUpperCase()
     }

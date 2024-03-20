@@ -3,12 +3,13 @@ import { StatusBar } from 'expo-status-bar' // Needed ?
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
+import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '../../utils.js'
 import Theme from '../../assets/styles.js'
+import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
 import ReviewsCarousel from '../../components/ReviewsCarousel.jsx'
 import Figures from '../../components/Figures.jsx'
 import Details from '../../components/Details.jsx'
-import languages from '../../assets/languages.json'
 import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
 
 import { api } from '../../services/api.js'
@@ -54,29 +55,6 @@ const Movie = ({ route, navigation }) => {
     /**
      * Functions
      */
-    // Generic formatting -> Needs to be moved in a generic component of formatting
-    const formatDate = (date) => {
-        return new Date(date).getFullYear()
-    }
-
-    const formatDuration = (duration) => {
-        const hours = Math.floor(duration / 60)
-        const minutes = duration % 60
-
-        const hoursFormat = hours < 10 ? `0${hours}` : `${hours}`
-        const minutesFormat = minutes < 10 ? `0${minutes}` : `${minutes}`
-
-        return `${hoursFormat}h${minutesFormat}`
-    }
-
-    const formatNote = (note) => {
-        return Math.floor(note * 10) / 10
-    }
-
-    const formatThousands = (number) => {
-        return number.toLocaleString('en-US')
-    }
-
     // Watchlist
     const isOnWatchlist = async () => {
         const storagedWatchlist = await AsyncStorage.getItem('@userWatchlist')
@@ -108,14 +86,7 @@ const Movie = ({ route, navigation }) => {
         }
     }
 
-    // Handlers
-    const handleWebsites = (website, id) => {
-        const url = website && websites[website]
-            ? `${websites[website]}${id}`
-            : id
-        Linking.openURL(url)
-    }
-
+    // Figures
     // To toggle between 5actors or all of them
     // const handleToggleImages = () => {
     //     if (figuresVisible === filteredFigures.length) { // Needs to be edited now that filteredFigures contains an object
@@ -125,27 +96,7 @@ const Movie = ({ route, navigation }) => {
     //     }
     // }
 
-    const handleTrailerLink = (trailer) => { // Needs to be improved (if ?, directly pass trailer.key as parameter ?, change styles of btn if trailer null ?)
-        trailer ? (
-            Linking.openURL(`https://www.youtube.com/watch?v=${trailer.key}`)
-        ) : (
-            // console.log('No trailer found')
-            null
-        )
-    }
-
     // Header
-    const handleScroll = Animated.event(
-        [{ 
-            nativeEvent: { 
-                contentOffset: { 
-                    y: HeaderScrollY 
-                }
-            } 
-        }],
-    { useNativeDriver: false }
-    )
-
     const animatedHeaderOpacity = HeaderScrollY.interpolate({
         inputRange: [100, 150],
         outputRange: [0, 1],
@@ -207,7 +158,28 @@ const Movie = ({ route, navigation }) => {
         }
     }
 
-    // Cast Tabs
+    /**
+     * Handlers
+     */
+    const handleWebsites = (website, id) => {
+        const url = website && websites[website]
+            ? `${websites[website]}${id}`
+            : id
+        Linking.openURL(url)
+    }
+
+    const handleScroll = Animated.event(
+        [{ 
+            nativeEvent: { 
+                contentOffset: { 
+                    y: HeaderScrollY 
+                }
+            } 
+        }],
+    { useNativeDriver: false }
+    )
+
+    // Figures
     const handleToggleTab = (tab) => {
         setSelectedTab(tab)
     }
@@ -232,14 +204,6 @@ const Movie = ({ route, navigation }) => {
         }
 
         return closestPerson
-    }
-
-    // Collection
-    const removeLastWord = (input) => {
-        let words = input.split(' ')
-        words.pop()
-    
-        return words.join(' ')
     }
     
     /**
@@ -291,7 +255,7 @@ const Movie = ({ route, navigation }) => {
         if (!data) return {}
 
         // Generic formatting
-        const releaseDate = formatDate(data.release_date)
+        const releaseDate = formatDateToYear(data.release_date)
         const duration = formatDuration(data.runtime)
         const note = formatNote(data.vote_average)
         const votes = formatThousands(data.vote_count)
