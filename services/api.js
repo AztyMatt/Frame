@@ -7,7 +7,7 @@ export async function api (url, params = {}){
 
     params.headers = Object.assign({
         accept: 'application/json',
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4N2VhNmRlZTUzNTY4NzMyY2JjNGM4MWI3N2E0MTQ3MyIsInN1YiI6IjY1NzQ4MDJlYTFkMzMyMDBhY2I4NDBmZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.wuke3H68aH_8A_ubMVLkz0pcr8q7kjyrqZgoU7VaCvk`,
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_API_KEY}`,
     }, params.headers)
 
     let response = await fetch(BASE_URL + url, params)
