@@ -20,7 +20,7 @@ const Details = ({details}) => {
                     {Array.isArray(details[key]) ? (
                         details[key].map((language, index) => (
                             <View key={index} style={styles.detailItem}>
-                                <CustomText>
+                                <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.detailText}>
                                     {language.english_name || language.name}
                                     {' '}
                                     ({
@@ -78,6 +78,9 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderColor: Theme.colors.primaryDarker,
         borderBottomRightRadius: 5
+    },
+    detailText: {
+        flex: 1
     },
     detailArrowContainer: {     
         width: 40,

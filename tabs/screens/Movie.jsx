@@ -294,7 +294,6 @@ const Movie = ({ route, navigation }) => {
         // Figures
         const formatFigures = () => {
             const cast = data.credits.cast
-            const crew = data.credits.crew
 
             const filters = [
                 { department: 'Directing', job: 'Co-Director' },
@@ -307,19 +306,19 @@ const Movie = ({ route, navigation }) => {
                 { department: 'Art', job: 'Supervising Art Director'}
                 // Optionnal -> Make a second list of filters if these one are not enough or if one is missing
             ]
-            let filteredCrew = []
+            let crew = []
 
             if (director) {
-                filteredCrew.unshift(director)
+                crew.unshift(director)
             }
     
             for (const { department, job } of filters) {
-                let filteredPeople = crew.filter(
+                let filteredPeople = data.credits.crew.filter(
                     person => person.department === department && person.job === job
                 )
     
                 if (filteredPeople.length === 0) {
-                    filteredPeople = crew.filter(person => person.department === department)
+                    filteredPeople = data.credits.crew.filter(person => person.department === department)
     
                     if (department === 'Directing' && director) {
                         filteredPeople = filteredPeople.filter(person => person !== director)
@@ -328,7 +327,7 @@ const Movie = ({ route, navigation }) => {
     
                 if (filteredPeople.length !== 0 && !filteredPeople.includes(undefined)) {
                     filteredPeople = [mostPopular(filteredPeople)]
-                    filteredCrew = [...filteredCrew, ...filteredPeople]
+                    crew = [...crew, ...filteredPeople]
                 }
             }
 
@@ -407,9 +406,11 @@ const Movie = ({ route, navigation }) => {
                                 />
                                 <View style={styles.headerBtnBackground}></View>
                             </Pressable>
+
                             <Animated.View style={{flex: 1, opacity: animatedHeaderTitleOpacity}}>
                                 <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ data.title }</CustomText>
                             </Animated.View>
+
                             <Pressable onPress={() => manageWatchlist()} style={styles.headerBtn}>
                                 <Image
                                     style={styles.headerBtnImg}
@@ -440,15 +441,24 @@ const Movie = ({ route, navigation }) => {
                                         }}
                                     />
                                 ) : (
-                                    <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image (component)
+                                    null
                                 )}
                             </View>
 
-                            <View style={styles.content}>
+                            <View style={[styles.content,
+                                {
+                                    marginTop: data.backdrop_path ? 170 : 50
+                                }
+                            ]}>
                                 <View style={{paddingHorizontal: 15}}>
                                     <View style={styles.preview}>
                                         <View style={styles.infos}>
-                                            <Animated.View style={[styles.titleContainer, {opacity: Animated.subtract(1, animatedHeaderOpacity)}]}>
+                                            <Animated.View style={[styles.titleContainer, 
+                                                {
+                                                    opacity: Animated.subtract(1, animatedHeaderOpacity),
+                                                    justifyContent: data.backdrop_path ? 'flex-end' : 'flex-start'
+                                                }
+                                            ]}>
                                                 <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ data.title }</CustomText>
                                             </Animated.View>
 
@@ -466,12 +476,20 @@ const Movie = ({ route, navigation }) => {
                                                         )}
                                                     </CustomText>
                                                 </View>
-
+                                                
                                                 <View style={styles.trailerContainer}>
-                                                    <Pressable onPress={() => handleTrailerLink(trailer)} style={styles.trailerBtn}>
-                                                        <CustomText> ► TRAILER </CustomText>
+                                                    <Pressable onPress={() => handleTrailerLink(formattedData.trailer)} style={[styles.trailerBtn,
+                                                        { 
+                                                            borderColor: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker'] 
+                                                        }
+                                                    ]}>
+                                                        <CustomText style={
+                                                            {
+                                                                color: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker']
+                                                            }
+                                                        }> ► TRAILER </CustomText>
                                                     </Pressable>
-                                                    <CustomText style={{ marginLeft: 10 }}>{ formattedData.duration }</CustomText>
+                                                    <CustomText>{ formattedData.duration }</CustomText>
                                                 </View>
                                             </View>
                                         </View>
@@ -490,14 +508,19 @@ const Movie = ({ route, navigation }) => {
                                     </View>
                                     
                                     <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
-                                        <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight}}>
+                                        <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight }}>
                                             <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
                                                 <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                                     <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                 </LinearGradient>
                                             </Animated.View>
+                                            
                                             <View onLayout={onLayout} style={styles.overviewContainer}>
-                                                <CustomText style={styles.tagline}>{data.tagline}</CustomText>
+                                                {data.tagline ? (
+                                                    <CustomText style={styles.tagline}>{data.tagline}</CustomText>
+                                                ) : (
+                                                    null
+                                                )}
                                                 <CustomText style={styles.overview}>{data.overview}</CustomText>
                                             </View>
                                         </Animated.View>
@@ -512,7 +535,7 @@ const Movie = ({ route, navigation }) => {
                                     </ScrollView>
                                 </View>
                                 
-                                <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText>
+                                {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
                                 <View style={styles.sectionContainer}>
                                     <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                         <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
@@ -794,15 +817,13 @@ const styles = StyleSheet.create({
     backdrop: {
         position: 'absolute',
         width: '100%',
-        height: '100%',
+        height: 220,
         top: 0,
         left: 0,
-        height: 220,
     },
 
     content: {
         zIndex: 2,
-        marginTop: 170
         // paddingHorizontal: 15,
         // transform: [{ translateY: -50 }] // Set the backdrop on absolute, and the content 
     },
@@ -823,6 +844,7 @@ const styles = StyleSheet.create({
     overviewContainer: {
         display: 'flex', 
         flexDirection: 'row',
+        // justifyContent: 'flex-start',
         flexWrap: 'wrap'
     },
     tagline: {
@@ -860,7 +882,6 @@ const styles = StyleSheet.create({
     titleContainer: {
         height: '37.5%',
         display: 'flex',
-        justifyContent: 'flex-end'
     },
     title: {
         fontWeight: 'bold',
@@ -891,8 +912,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderWidth: 1,
-        borderColor: Theme.colors.primary,
-        borderRadius: 5
+        borderRadius: 5,
+        marginRight: 10
     },
 
     poster: {
