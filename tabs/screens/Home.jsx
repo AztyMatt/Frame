@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { formatReleaseDate, handleTrailerLink } from '../../utils.js'
 import Theme from '../../assets/styles.js'
 import CustomText from '../../components/tags/CustomText.jsx'
+import CustomImage from '../../components/tags/CustomImage.jsx'
 import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
 
 import { api } from '../../services/api.js'
@@ -100,7 +101,6 @@ const Home = () => {
                 {firstUpcoming ? (
                     <Pressable onPress={() => navigation.navigate('Movie', { movieId: firstUpcoming.id })} style={{ marginBottom: 5 }}>
                         <View style={styles.bannerContainer}>
-                            
                             <View style={styles.banner}>
                                 <View style={styles.titleContainer}>
                                     <View style={styles.titleUnderline}>
@@ -111,26 +111,19 @@ const Home = () => {
                                     <CustomText> ► TRAILER </CustomText>
                                 </Pressable>
                             </View>
-            
+                            
                             <View style={[styles.linearGradientContainer, { height: '100%' }]}>
                                 <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                     <View style={[styles.linearGradient, { height: 100 }]}></View>
                                 </LinearGradient>
                             </View>
-
                         </View>
 
-                        {firstUpcoming.backdrop_path ? (
-                            <Image
-                                style={styles.backdrop}
-                                // resizeMode='contain'
-                                source={{
-                                    uri: `https://image.tmdb.org/t/p/original/${firstUpcoming.backdrop_path}`,
-                                }}
-                            />
-                        ) : (
-                            null // Future skeleton
-                        )}
+                        <CustomImage
+                            source={firstUpcoming.backdrop_path}
+                            style={styles.backdrop}
+                            fallback={null}
+                        />
                     </Pressable> 
                 ) : (
                     null // Future skeleton

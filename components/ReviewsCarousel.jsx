@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { capitalizeFirstLetter } from '../utils.js'
 import Theme from '../assets/styles.js'
 import CustomText from './tags/CustomText.jsx'
+import CustomImage from './tags/CustomImage.jsx'
 
 const screenWidth = Dimensions.get('window').width
 
@@ -115,23 +116,16 @@ const ReviewsCarousel = ({ reviews, navigation }) => {
                                     <View style={[styles.linearGradient, { height: 50 }]}></View>
                                 </LinearGradient>
                             </View>
+                            
                             <View style={styles.content}>
                                 <View style={styles.authorContainer}>
-                                    {review.author_details.avatar_path ? (
-                                        <Image
-                                            style={styles.authorAvatar}
-                                            resizeMode='cover'
-                                            source={{
-                                            uri: `https://image.tmdb.org/t/p/original${review.author_details.avatar_path}`,
-                                            }}
-                                        />
-                                    ) : (
-                                        <Image
-                                            style={styles.authorAvatar}
-                                            resizeMode='cover'
-                                            source={require('../assets/icons/figure.png')}
-                                        />
-                                    )}
+                                    <CustomImage
+                                        source={review.author_details.avatar_path}
+                                        style={styles.authorAvatar}
+                                        fallback={'default'}
+                                        fallbackContent={require('../assets/icons/figure.png')}
+                                    />
+
                                     <View style={styles.author}>
                                         <View style={styles.authorTop}>
                                             <CustomText style={styles.authorName}>
@@ -141,9 +135,11 @@ const ReviewsCarousel = ({ reviews, navigation }) => {
                                                 {review.author_details.rating ? `${review.author_details.rating}/10 ★` : 'Not rated'}
                                             </CustomText>
                                         </View>
+
                                         <Text style={styles.authorUsername}>{review.author_details.username}</Text>
                                     </View>
                                 </View>
+
                                 <CustomText numberOfLines={7} ellipsizeMode='tail'>
                                     {review.content.map((part) => (
                                         part.map((fragment, index) => (

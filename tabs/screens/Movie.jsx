@@ -7,6 +7,7 @@ import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatTho
 import Theme from '../../assets/styles.js'
 import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
+import CustomImage from '../../components/tags/CustomImage.jsx'
 import ReviewsCarousel from '../../components/ReviewsCarousel.jsx'
 import Figures from '../../components/Figures.jsx'
 import Details from '../../components/Details.jsx'
@@ -28,7 +29,7 @@ const Movie = ({ route, navigation }) => {
      */
     // Main
     const { movieId } = route.params
-    const [data, setApiResult] = useState(null)
+    const [data, setData] = useState(null)
     const [onWatchlist, setOnWatchlist] = useState(false)
 
     // Header
@@ -214,7 +215,7 @@ const Movie = ({ route, navigation }) => {
         const fetchData = async () => {
             try {
                 const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en-US`) //%2Crelease_dates
-                setApiResult(result)
+                setData(result)
 
                 // Reset
                 return navigation.addListener('focus', () => {
@@ -421,6 +422,7 @@ const Movie = ({ route, navigation }) => {
                                 <View style={styles.headerBtnBackground}></View>
                             </Pressable>
                         </View>
+                        
                         <Animated.View style={[styles.headerBackground, { opacity: animatedHeaderOpacity }]}></Animated.View>
                     </View>
                     
@@ -432,17 +434,12 @@ const Movie = ({ route, navigation }) => {
                                         <View style={[styles.linearGradient, { height: 100 }]}></View>
                                     </LinearGradient>
                                 </View>
-                                {data.backdrop_path ? (
-                                    <Image
-                                        style={styles.backdrop}
-                                        // resizeMode='contain'
-                                        source={{
-                                            uri: `https://image.tmdb.org/t/p/original/${data.backdrop_path}`,
-                                        }}
-                                    />
-                                ) : (
-                                    null
-                                )}
+
+                                <CustomImage
+                                    source={data.backdrop_path}
+                                    style={styles.backdrop}
+                                    fallback={null}
+                                />
                             </View>
 
                             <View style={[styles.content,
@@ -468,6 +465,7 @@ const Movie = ({ route, navigation }) => {
                                                         <CustomText>{ formattedData.releaseDate }</CustomText>
                                                         <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
                                                     </View>
+
                                                     <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
                                                         {formattedData.director ? (
                                                             formattedData.director.name
@@ -489,22 +487,19 @@ const Movie = ({ route, navigation }) => {
                                                             }
                                                         }> ► TRAILER </CustomText>
                                                     </Pressable>
+
                                                     <CustomText>{ formattedData.duration }</CustomText>
                                                 </View>
                                             </View>
                                         </View>
 
-                                        {data.poster_path ? (
-                                            <Image
-                                                style={styles.poster}
-                                                resizeMode='contain'
-                                                source={{
-                                                    uri: `https://image.tmdb.org/t/p/original/${data.poster_path}`,
-                                                }}
-                                            />
-                                        ) : (
-                                            <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
-                                        )}
+                                        <CustomImage
+                                            source={data.poster_path}
+                                            style={styles.poster}
+                                            fallback={'poster'}
+                                            fallbackContent={data.title}
+                                        />
+
                                     </View>
                                     
                                     <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
@@ -539,25 +534,22 @@ const Movie = ({ route, navigation }) => {
                                 <View style={styles.sectionContainer}>
                                     <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                         <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
+
                                         {formattedData.providers ? (
                                             <View style={styles.providerContainer}>
                                                 <View style={styles.providerContainer}>
                                                     {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
                                                         <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
-                                                            {provider.logo_path ? (
-                                                                <Image
-                                                                    style={styles.provider}
-                                                                    resizeMode='contain'
-                                                                    source={{
-                                                                        uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
-                                                            )}
+                                                            <CustomImage
+                                                                source={provider.logo_path}
+                                                                style={styles.provider}
+                                                                fallback={'provider'}
+                                                            />
+
                                                         </Pressable>
                                                     ))}
                                                 </View>
+
                                                 <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
                                             </View>
                                         ) : (
@@ -606,8 +598,10 @@ const Movie = ({ route, navigation }) => {
                                                         </View>
                                                     </View>
                                                 </View>
+
                                                 <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
                                                     <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
+
                                                     <Image
                                                         style={styles.reviewImg}
                                                         source={
@@ -638,9 +632,11 @@ const Movie = ({ route, navigation }) => {
                                             <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
                                                 <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
                                             </Pressable>
+
                                             <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
                                                 <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
                                             </Pressable>
+
                                             <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
                                                 <CustomText style={whichTabBtn('details')}> Details </CustomText>
                                             </Pressable>
@@ -679,23 +675,18 @@ const Movie = ({ route, navigation }) => {
                                                     {removeLastWord(data.belongs_to_collection.name)}
                                                 </CustomText>
                                             </View>
-
+                                            
                                             <View style={[styles.linearGradientContainer, { height: 150 }]}>
                                                 <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                                     <View style={[styles.linearGradient, { height: 50 }]}></View>
                                                 </LinearGradient>
                                             </View>
-                                            {data.belongs_to_collection.backdrop_path ? (
-                                                <Image
-                                                    style={styles.backdrop}
-                                                    // resizeMode='contain'
-                                                    source={{
-                                                        uri: `https://image.tmdb.org/t/p/original/${data.belongs_to_collection.backdrop_path}`,
-                                                    }}
-                                                />
-                                            ) : (
-                                                <CustomText>Erreur de chargement de l'image</CustomText> // -> Needs to be a default image/skeleton (component)
-                                            )}
+
+                                            <CustomImage
+                                                source={data.belongs_to_collection.backdrop_path}
+                                                style={styles.collectionBackdrop}
+                                                fallback={'collectionBackdrop'}
+                                            />
                                         </Pressable>
                                     </View>
                                 ) : (
@@ -825,7 +816,7 @@ const styles = StyleSheet.create({
     content: {
         zIndex: 2,
         // paddingHorizontal: 15,
-        // transform: [{ translateY: -50 }] // Set the backdrop on absolute, and the content 
+        // transform: [{ translateY: -50 }] // Set the backdrop on absolute, and the content
     },
 
     preview: {
@@ -923,7 +914,8 @@ const styles = StyleSheet.create({
         borderColor: Theme.colors.secondary,
         borderRadius: 10,
         backgroundColor: Theme.colors.secondaryDarker,
-        marginLeft: 10
+        marginLeft: 10,
+        overflow: 'hidden'
     },
 
     sectionContainer: {
@@ -1071,10 +1063,15 @@ const styles = StyleSheet.create({
 
     collectionContainer: {
         height: 150,
+        width: '100%',
         borderWidth: 1,
         borderColor: Theme.colors.primaryDarker,
         borderRadius: 5,
         overflow: 'hidden'
+    },
+    collectionBackdrop: {
+        height: 150,
+        width: '100%',
     },
     collection: {
         zIndex: 2,

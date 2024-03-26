@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, TextInput } from 'react-native'
 import CustomText from '../../components/tags/CustomText.jsx'
+import CustomImage from '../../components/tags/CustomImage.jsx'
 
 import { api } from '../../services/api.js'
 
@@ -52,17 +53,12 @@ const Research = () => {
                     <View>
                         {apiResult.results.map((movie, index) => (
                             <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={styles.card}>
-                                {movie.poster_path ? (
-                                    <Image
-                                        style={styles.poster}
-                                        resizeMode='contain'
-                                        source={{
-                                            uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                                        }}
-                                    />
-                                ) : (
-                                    <CustomText>Erreur de chargement de l'image</CustomText> // Needs to be changed
-                                )}
+                                <CustomImage
+                                    source={movie.poster_path}
+                                    style={styles.poster}
+                                    fallback={'poster'}
+                                    fallbackContent={movie.title}
+                                />
 
                                 <View style={styles.infos}>
                                     <View style={styles.titleContainer}>
@@ -139,6 +135,7 @@ const styles = StyleSheet.create({
         width: 96,
         borderWidth: 1,
         borderColor: 'white',
-        borderRadius: 10
+        borderRadius: 10,
+        overflow: 'hidden'
     },
 })

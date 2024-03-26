@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { StyleSheet, View, ScrollView, Image, Pressable } from 'react-native'
 import Theme from '../assets/styles.js'
+import CustomImage from './tags/CustomImage.jsx'
 
 const MoviesHorizontalList = ({ movies, navigation }) => {
     const scrollViewRef = useRef(null)
@@ -16,15 +17,12 @@ const MoviesHorizontalList = ({ movies, navigation }) => {
         <ScrollView ref={scrollViewRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
             {movies.map((movie, index) => (
                 <Pressable onPress={() => navigation.push('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
-                    {movie.poster_path ? (
-                        <Image
-                            style={styles.poster}
-                            resizeMode='contain'
-                            source={{ uri: `https://image.tmdb.org/t/p/original${movie.poster_path}` }}
-                        />
-                    ) : (
-                        <View style={styles.poster}></View> // Needs to be replace by a better skeleton
-                    )}
+                    <CustomImage
+                        source={movie.poster_path}
+                        style={styles.poster}
+                        fallback={'poster'}
+                        fallbackContent={movie.title}
+                    />
                 </Pressable>
             ))}
         </ScrollView>
@@ -44,6 +42,7 @@ const styles = StyleSheet.create({
         width: 100,
         borderWidth: 1,
         borderColor: Theme.colors.primaryDarker,
-        borderRadius: 5
+        borderRadius: 5,
+        overflow: 'hidden'
     }
 })
