@@ -8,7 +8,8 @@ import Theme from '../../assets/styles.js'
 import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
-import ReviewsCarousel from '../../components/ReviewsCarousel.jsx'
+import Carousel from '../../components/Carousel.jsx'
+import Review from '../../components/Review.jsx'
 import Figures from '../../components/Figures.jsx'
 import Details from '../../components/Details.jsx'
 import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
@@ -499,7 +500,6 @@ const Movie = ({ route, navigation }) => {
                                             fallback={'poster'}
                                             fallbackContent={data.title}
                                         />
-
                                     </View>
                                     
                                     <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
@@ -529,8 +529,7 @@ const Movie = ({ route, navigation }) => {
                                         ))}
                                     </ScrollView>
                                 </View>
-                                
-                                {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
+
                                 <View style={styles.sectionContainer}>
                                     <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
                                         <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
@@ -618,7 +617,15 @@ const Movie = ({ route, navigation }) => {
 
                                         <View>
                                             {!data.reviews.results.length == 0 ? (
-                                                <ReviewsCarousel reviews={data.reviews.results} navigation={navigation}/>  
+                                                <Carousel
+                                                    navigation={navigation} 
+                                                    items={data.reviews.results.map((review) => (
+                                                        <Review key={review.id} review={review} />
+                                                    ))}
+                                                    itemsVisible={10}
+                                                    controls={true}
+                                                    seeMore={'reviews'}
+                                                />
                                             ) : (
                                                 <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
                                             )}
