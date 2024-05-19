@@ -99,7 +99,10 @@ const Home = () => {
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {firstUpcoming ? (
-                    <Pressable onPress={() => navigation.navigate('Movie', { movieId: firstUpcoming.id })} style={{ marginBottom: 5 }}>
+                    <Pressable 
+                        onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: firstUpcoming.id } })}
+                        style={{ marginBottom: 5 }}
+                    >
                         <View style={styles.bannerContainer}>
                             <View style={styles.banner}>
                                 <View style={styles.titleContainer}>

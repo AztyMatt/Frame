@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
-import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, Animated } from 'react-native'
+import { SafeAreaView, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated, Dimensions } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '../../utils.js'
@@ -8,6 +8,8 @@ import Theme from '../../assets/styles.js'
 import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
+import CustomModal from '../../components/tags/CustomModal.jsx'
+import PressableOrView from '../../components/tags/PressableOrView'
 import Carousel from '../../components/Carousel.jsx'
 import Review from '../../components/Review.jsx'
 import Figures from '../../components/Figures.jsx'
@@ -25,16 +27,21 @@ const websites = {
 }
 
 const Movie = ({ route, navigation }) => {
+    const { movieId } = route.params
+
     /**
      * useStates
      */
     // Main
-    const { movieId } = route.params
     const [data, setData] = useState(null)
     const [onWatchlist, setOnWatchlist] = useState(false)
+    const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width)
 
     // Header
     const HeaderScrollY = useState(new Animated.Value(0))[0]
+
+    // Posters
+    const [modalPostersData, setModalPostersData] = useState(null)
 
     // Overview
     const maxOverviewHeight = 110
@@ -53,6 +60,9 @@ const Movie = ({ route, navigation }) => {
      */
     // Main
     const mainScrollViewRef = useRef()
+
+    // Modals
+    const modalPosterRef = useRef(null)
 
     /**
      * Functions
@@ -77,6 +87,7 @@ const Movie = ({ route, navigation }) => {
                 const newMovie = {
                     id: movieId,
                     poster_path: data.poster_path,
+                    title: data.title
                 }
                 parsedWatchlist.push(newMovie)
                 setOnWatchlist(true)
@@ -109,6 +120,14 @@ const Movie = ({ route, navigation }) => {
         outputRange: [0, 1],
         extrapolate: 'clamp',
     })
+
+    // Modal
+    const openModal = (ref) => {
+        ref.current.openModal()
+    }
+    const closeModal = (ref) => {
+        ref.current.closeModal()
+    }
 
     // Overview
     const onLayout = (event) => {
@@ -178,7 +197,7 @@ const Movie = ({ route, navigation }) => {
                 }
             } 
         }],
-    { useNativeDriver: false }
+        { useNativeDriver: false }
     )
 
     // Figures
@@ -215,8 +234,11 @@ const Movie = ({ route, navigation }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en-US`) //%2Crelease_dates
+                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en`) //%2Crelease_dates
                 setData(result)
+
+                const resultImagesData = await api(`/movie/${movieId}/images?language=en`)
+                setModalPostersData(resultImagesData.posters)
 
                 // Reset
                 return navigation.addListener('focus', () => {
@@ -397,6 +419,7 @@ const Movie = ({ route, navigation }) => {
     return (
         <>
             <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
+
             {data ? (
                 <View style={styles.container}>
                     <View style={styles.headerContainer}>
@@ -435,7 +458,27 @@ const Movie = ({ route, navigation }) => {
                                         <View style={[styles.linearGradient, { height: 100 }]}></View>
                                     </LinearGradient>
                                 </View>
-
+                                {/* <View style={[styles.backdrop, {height: 220}]}>
+                                    <Carousel
+                                        navigation={navigation} 
+                                        items={backdropData.map((backdrop, index) => (
+                                            <Pressable onPress={() => {console.log('selected')}} style={{width: '100%', height: '100%'}}>
+                                                <View key={index} style={{width: '100%', height: '100%'}}>
+                                                    <CustomImage
+                                                        source={backdrop.file_path}
+                                                        style={{width: '100%', height: '100%'}}
+                                                        fallback={null}
+                                                    />
+                                                </View>
+                                            </Pressable>
+                                        ))}
+                                        // itemsVisible={5}
+                                        infiniteScroll={true}
+                                        automaticScroll={true}
+                                        automaticScrollSpeed={2}
+                                        // controls={true}
+                                    />
+                                </View> */}
                                 <CustomImage
                                     source={data.backdrop_path}
                                     style={styles.backdrop}
@@ -494,12 +537,38 @@ const Movie = ({ route, navigation }) => {
                                             </View>
                                         </View>
 
-                                        <CustomImage
-                                            source={data.poster_path}
-                                            style={styles.poster}
-                                            fallback={'poster'}
-                                            fallbackContent={data.title}
+                                        <CustomModal ref={modalPosterRef}
+                                            navigation={navigation}
+                                            content={
+                                                <PressableOrView
+                                                    condition={modalPostersData && modalPostersData.length > 1}
+                                                    onPress={() => {
+                                                        navigation.navigate('Posters', { movieId: data.id, screenWidth: screenWidth })
+                                                        closeModal(modalPosterRef)
+                                                    }}
+                                                >
+                                                    <CustomImage
+                                                        source={data.poster_path}
+                                                        style={{
+                                                            width: screenWidth - 50,
+                                                            maxWidth: 360,
+                                                            aspectRatio: 0.667, // default aspect ratio
+                                                            borderRadius: 10,
+                                                            borderWidth: 1,
+                                                            borderColor: Theme.colors.secondary
+                                                        }}
+                                                    />
+                                                </PressableOrView>
+                                            }
                                         />
+                                        <PressableOrView condition={data.poster_path} onPress={() => {openModal(modalPosterRef)}} style={styles.poster}>
+                                            <CustomImage
+                                                source={data.poster_path}
+                                                style={{width: '100%', height: '100%'}}
+                                                fallback={'poster'}
+                                                fallbackContent={data.title}
+                                            />
+                                        </PressableOrView>
                                     </View>
                                     
                                     <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
@@ -520,6 +589,8 @@ const Movie = ({ route, navigation }) => {
                                             </View>
                                         </Animated.View>
                                     </Pressable>
+
+                                    {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
 
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
                                         {data && data.genres.map((genre, index) => (
@@ -585,7 +656,7 @@ const Movie = ({ route, navigation }) => {
                                                                         aria-label=''
                                                                         style={styles.ratingBarText}
                                                                     >
-                                                                        {'/////////////////////' /* -> Needs to be edited for larger screens */}
+                                                                        {Array(Math.ceil(screenWidth / 10)).fill('/').join('')} {/* Fills the screen regardless of the width */}
                                                                     </Text>
                                                                 </View>
                                                             </View>
@@ -616,7 +687,7 @@ const Movie = ({ route, navigation }) => {
                                         <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
 
                                         <View>
-                                            {!data.reviews.results.length == 0 ? (
+                                            {data.reviews.results && data.reviews.results.length > 0 ? (
                                                 <Carousel
                                                     navigation={navigation} 
                                                     items={data.reviews.results.map((review) => (
@@ -625,6 +696,8 @@ const Movie = ({ route, navigation }) => {
                                                     itemsVisible={10}
                                                     controls={true}
                                                     seeMore={'reviews'}
+                                                    // slidePadding={15}
+                                                    infiniteScroll={true}
                                                 />
                                             ) : (
                                                 <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>

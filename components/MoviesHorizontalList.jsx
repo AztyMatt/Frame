@@ -16,7 +16,7 @@ const MoviesHorizontalList = ({ movies, navigation }) => {
     return (
         <ScrollView ref={scrollViewRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
             {movies.map((movie, index) => (
-                <Pressable onPress={() => navigation.push('Movie', { movieId: movie.id })} key={index} style={{ marginRight: 10 }}>
+                <Pressable onPress={() => navigation.push('MovieTab', { screen: 'Movie', params: { movieId: movie.id } })} key={index} style={{ marginRight: 10 }}>
                     <CustomImage
                         source={movie.poster_path}
                         style={styles.poster}

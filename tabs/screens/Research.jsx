@@ -52,7 +52,7 @@ const Research = () => {
                 {apiResult ? (
                     <View>
                         {apiResult.results.map((movie, index) => (
-                            <Pressable onPress={() => navigation.navigate('Movie', { movieId: movie.id })} key={index} style={styles.card}>
+                            <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
                                 <CustomImage
                                     source={movie.poster_path}
                                     style={styles.poster}
