@@ -1,9 +1,9 @@
 import '@expo/metro-runtime'
 
 import React from 'react'
-import { NavigationContainer } from '@react-navigation/native'
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Image } from 'react-native'
+import { SafeAreaView, Image } from 'react-native'
 import HomeTab from './tabs/HomeTab.jsx'
 import ResearchTab from './tabs/ResearchTab.jsx'
 import Theme from './assets/styles.js'
@@ -11,10 +11,20 @@ import { EventProvider } from 'react-native-outside-press'
 
 const Tab = createBottomTabNavigator()
 
+const MyTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: Theme.colors.secondaryDarker
+    },
+  };
+
 const App = () => {
     return (
         <EventProvider>
-            <NavigationContainer>
+            <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
+
+            <NavigationContainer theme={MyTheme}>
                 <Tab.Navigator 
                     initialRouteName="HomeTab"
                     screenOptions={{

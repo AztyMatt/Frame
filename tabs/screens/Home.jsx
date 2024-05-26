@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable } from 'react-native'
+import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { formatReleaseDate, handleTrailerLink } from '../../utils.js'
@@ -92,7 +92,7 @@ const Home = () => {
     )
 
     return (
-        <SafeAreaView style={styles.container}>
+        <>
             <View style={styles.header}>
                 <Text style={{ fontWeight: 'bold', fontSize: 25, color: Theme.colors.primary }}>FRAME</Text>
             </View>
@@ -156,31 +156,26 @@ const Home = () => {
                     )}
 
                     {watchlist && watchlist.length > 0 ? (
-                        <>
+                        <View>
                             <View style={styles.sectionSeparator}></View>
 
                             <View style={{ marginVertical: 25 }}>
                                 <CustomText style={styles.sectionTitle}>►  My watchlist</CustomText>
                                 <MoviesHorizontalList movies={watchlist} navigation={navigation}></MoviesHorizontalList>
                             </View>
-                        </>
+                        </View>
                     ) : (
                         null // Future skeleton
                     )}
                 </View>
     
             </ScrollView>
-        </SafeAreaView>
+        </>
     )
 }
 export default Home
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Theme.colors.secondaryDarker
-    },
-    
     header: {
         height: 50,
         display: 'flex',

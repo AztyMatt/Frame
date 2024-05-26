@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { StyleSheet, View, ScrollView, Text, Image, SafeAreaView, Pressable, Linking, TextInput } from 'react-native'
+import { StyleSheet, View, ScrollView, Pressable, TextInput } from 'react-native'
 import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
 
@@ -37,55 +37,48 @@ const Research = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.content}>
+        <ScrollView style={styles.content}>
+            <View>
+                <TextInput
+                    style={styles.searchBar}
+                    placeholder='Research a movie'
+                    placeholderTextColor='#B5B5B5'
+                    value={query}
+                    onChangeText={(newQuery) => setQuery(newQuery)}
+                />
+            </View>
+
+            {apiResult ? (
                 <View>
-                    <TextInput
-                        style={styles.searchBar}
-                        placeholder='Research a movie'
-                        placeholderTextColor='#B5B5B5'
-                        value={query}
-                        onChangeText={(newQuery) => setQuery(newQuery)}
-                    />
-                </View>
+                    {apiResult.results.map((movie, index) => (
+                        <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
+                            <CustomImage
+                                source={movie.poster_path}
+                                style={styles.poster}
+                                fallback={'poster'}
+                                fallbackContent={movie.title}
+                            />
 
-                {apiResult ? (
-                    <View>
-                        {apiResult.results.map((movie, index) => (
-                            <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
-                                <CustomImage
-                                    source={movie.poster_path}
-                                    style={styles.poster}
-                                    fallback={'poster'}
-                                    fallbackContent={movie.title}
-                                />
-
-                                <View style={styles.infos}>
-                                    <View style={styles.titleContainer}>
-                                        <CustomText numberOfLines={1} ellipsizeMode='tail' style={styles.title}>{movie.title}</CustomText>
-                                        <CustomText style={{marginLeft: 10}}>{formatReleaseDate(movie.release_date)}</CustomText>
-                                    </View>
-
-                                    <CustomText numberOfLines={4} ellipsizeMode='tail' style={styles.overview}>{movie.overview}</CustomText>
+                            <View style={styles.infos}>
+                                <View style={styles.titleContainer}>
+                                    <CustomText numberOfLines={1} ellipsizeMode='tail' style={styles.title}>{movie.title}</CustomText>
+                                    <CustomText style={{marginLeft: 10}}>{formatReleaseDate(movie.release_date)}</CustomText>
                                 </View>
-                            </Pressable>
-                        ))}
-                    </View>
-                ) : (
-                    null
-                )}
-            </ScrollView>
-        </SafeAreaView>
+
+                                <CustomText numberOfLines={4} ellipsizeMode='tail' style={styles.overview}>{movie.overview}</CustomText>
+                            </View>
+                        </Pressable>
+                    ))}
+                </View>
+            ) : (
+                null
+            )}
+        </ScrollView>
     )
 }
 export default Research 
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#101010' 
-    },
-
     content: {
         paddingHorizontal: 15
     },

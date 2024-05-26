@@ -1,7 +1,7 @@
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack'
 import Movie from './screens/Movie.jsx'
-import Posters from '../components/Posters.jsx'
+import Posters from './screens/Posters.jsx'
 
 const Stack = createStackNavigator()
 

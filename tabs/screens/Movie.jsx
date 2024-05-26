@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
-import { SafeAreaView, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated, Dimensions } from 'react-native'
+import { Dimensions, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LinearGradient } from 'expo-linear-gradient'
 import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '../../utils.js'
@@ -10,6 +10,7 @@ import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
 import CustomModal from '../../components/tags/CustomModal.jsx'
 import PressableOrView from '../../components/tags/PressableOrView'
+import Header from '../../components/Header.jsx'
 import Carousel from '../../components/Carousel.jsx'
 import Review from '../../components/Review.jsx'
 import Figures from '../../components/Figures.jsx'
@@ -417,462 +418,391 @@ const Movie = ({ route, navigation }) => {
     }, [data])
 
     return (
-        <>
-            <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
-
-            {data ? (
-                <View style={styles.container}>
-                    <View style={styles.headerContainer}>
-                        <View style={styles.header}>
-                            <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                                <Image
-                                    style={styles.headerBtnImg}
-                                    source={require('../../assets/icons/back.png')}
-                                />
-                                <View style={styles.headerBtnBackground}></View>
-                            </Pressable>
-
-                            <Animated.View style={{flex: 1, opacity: animatedHeaderTitleOpacity}}>
-                                <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ data.title }</CustomText>
-                            </Animated.View>
-
-                            <Pressable onPress={() => manageWatchlist()} style={styles.headerBtn}>
-                                <Image
-                                    style={styles.headerBtnImg}
-                                    source={
-                                        onWatchlist ? require('../../assets/icons/watchlist.png') : require('../../assets/icons/watchlistOff.png')
-                                    }
-                                />
-                                <View style={styles.headerBtnBackground}></View>
-                            </Pressable>
-                        </View>
-                        
-                        <Animated.View style={[styles.headerBackground, { opacity: animatedHeaderOpacity }]}></Animated.View>
-                    </View>
+        data ? (
+            <View>
+                <Header
+                    navigation={navigation}
+                    title={data.title}
                     
-                    <ScrollView ref={mainScrollViewRef} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
+                    absolute={true}
+                    titleOpacity={animatedHeaderTitleOpacity}
+                    opacity={animatedHeaderOpacity}
+
+                    additionalBtn={{
+                        onPress: () => manageWatchlist(),
+                        imageSource: onWatchlist
+                            ? require('../../assets/icons/watchlist.png')
+                            : require('../../assets/icons/watchlistOff.png')
+                    }}
+                />
+                
+                <ScrollView ref={mainScrollViewRef} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
+                    <View>
                         <View>
-                            <View>
-                                <View style={[styles.linearGradientContainer, { height: 220 }]}>
-                                    <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                        <View style={[styles.linearGradient, { height: 100 }]}></View>
-                                    </LinearGradient>
-                                </View>
-                                {/* <View style={[styles.backdrop, {height: 220}]}>
-                                    <Carousel
-                                        navigation={navigation} 
-                                        items={backdropData.map((backdrop, index) => (
-                                            <Pressable onPress={() => {console.log('selected')}} style={{width: '100%', height: '100%'}}>
-                                                <View key={index} style={{width: '100%', height: '100%'}}>
-                                                    <CustomImage
-                                                        source={backdrop.file_path}
-                                                        style={{width: '100%', height: '100%'}}
-                                                        fallback={null}
-                                                    />
-                                                </View>
-                                            </Pressable>
-                                        ))}
-                                        // itemsVisible={5}
-                                        infiniteScroll={true}
-                                        automaticScroll={true}
-                                        automaticScrollSpeed={2}
-                                        // controls={true}
-                                    />
-                                </View> */}
-                                <CustomImage
-                                    source={data.backdrop_path}
-                                    style={styles.backdrop}
-                                    fallback={null}
-                                />
+                            <View style={[styles.linearGradientContainer, { height: 220 }]}>
+                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                    <View style={[styles.linearGradient, { height: 100 }]}></View>
+                                </LinearGradient>
                             </View>
-
-                            <View style={[styles.content,
-                                {
-                                    marginTop: data.backdrop_path ? 170 : 50
-                                }
-                            ]}>
-                                <View style={{paddingHorizontal: 15}}>
-                                    <View style={styles.preview}>
-                                        <View style={styles.infos}>
-                                            <Animated.View style={[styles.titleContainer, 
-                                                {
-                                                    opacity: Animated.subtract(1, animatedHeaderOpacity),
-                                                    justifyContent: data.backdrop_path ? 'flex-end' : 'flex-start'
-                                                }
-                                            ]}>
-                                                <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ data.title }</CustomText>
-                                            </Animated.View>
-
-                                            <View style={styles.details}>
-                                                <View>
-                                                    <View style={styles.directorContainer}>
-                                                        <CustomText>{ formattedData.releaseDate }</CustomText>
-                                                        <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
-                                                    </View>
-
-                                                    <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
-                                                        {formattedData.director ? (
-                                                            formattedData.director.name
-                                                        ) : (
-                                                            'Unknow director'
-                                                        )}
-                                                    </CustomText>
-                                                </View>
-                                                
-                                                <View style={styles.trailerContainer}>
-                                                    <Pressable onPress={() => handleTrailerLink(formattedData.trailer)} style={[styles.trailerBtn,
-                                                        { 
-                                                            borderColor: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker'] 
-                                                        }
-                                                    ]}>
-                                                        <CustomText style={
-                                                            {
-                                                                color: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker']
-                                                            }
-                                                        }> ► TRAILER </CustomText>
-                                                    </Pressable>
-
-                                                    <CustomText>{ formattedData.duration }</CustomText>
-                                                </View>
-                                            </View>
-                                        </View>
-
-                                        <CustomModal ref={modalPosterRef}
-                                            navigation={navigation}
-                                            content={
-                                                <PressableOrView
-                                                    condition={modalPostersData && modalPostersData.length > 1}
-                                                    onPress={() => {
-                                                        navigation.navigate('Posters', { movieId: data.id, screenWidth: screenWidth })
-                                                        closeModal(modalPosterRef)
-                                                    }}
-                                                >
-                                                    <CustomImage
-                                                        source={data.poster_path}
-                                                        style={{
-                                                            width: screenWidth - 50,
-                                                            maxWidth: 360,
-                                                            aspectRatio: 0.667, // default aspect ratio
-                                                            borderRadius: 10,
-                                                            borderWidth: 1,
-                                                            borderColor: Theme.colors.secondary
-                                                        }}
-                                                    />
-                                                </PressableOrView>
-                                            }
-                                        />
-                                        <PressableOrView condition={data.poster_path} onPress={() => {openModal(modalPosterRef)}} style={styles.poster}>
-                                            <CustomImage
-                                                source={data.poster_path}
-                                                style={{width: '100%', height: '100%'}}
-                                                fallback={'poster'}
-                                                fallbackContent={data.title}
-                                            />
-                                        </PressableOrView>
-                                    </View>
-                                    
-                                    <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
-                                        <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight }}>
-                                            <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
-                                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                                    <View style={[styles.linearGradient, { height: 50 }]}></View>
-                                                </LinearGradient>
-                                            </Animated.View>
-                                            
-                                            <View onLayout={onLayout} style={styles.overviewContainer}>
-                                                {data.tagline ? (
-                                                    <CustomText style={styles.tagline}>{data.tagline}</CustomText>
-                                                ) : (
-                                                    null
-                                                )}
-                                                <CustomText style={styles.overview}>{data.overview}</CustomText>
-                                            </View>
-                                        </Animated.View>
-                                    </Pressable>
-
-                                    {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
-
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
-                                        {data && data.genres.map((genre, index) => (
-                                            <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index} style={styles.genre}>
-                                                <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
-                                            </Pressable>
-                                        ))}
-                                    </ScrollView>
-                                </View>
-
-                                <View style={styles.sectionContainer}>
-                                    <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
-                                        <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
-
-                                        {formattedData.providers ? (
-                                            <View style={styles.providerContainer}>
-                                                <View style={styles.providerContainer}>
-                                                    {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
-                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
-                                                            <CustomImage
-                                                                source={provider.logo_path}
-                                                                style={styles.provider}
-                                                                fallback={'provider'}
-                                                            />
-
-                                                        </Pressable>
-                                                    ))}
-                                                </View>
-
-                                                <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
-                                            </View>
-                                        ) : (
-                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
-                                        )}
-                                    </View>
-
-                                    <View style={styles.section}>
-                                        <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
-
-                                        <View>
-                                            <View style={styles.reviewContainer}>
-                                                <View style={styles.reviewInfos}>
-                                                    <View style={{ marginBottom: 7.5}}>
-                                                        <CustomText>
-                                                            {/* {'( '} */}
-                                                            <CustomText style={styles.reviewDetails}>{ formattedData.votes }</CustomText>
-                                                            {' ratings - '}
-                                                            <CustomText style={styles.reviewDetails}>{`${formattedData.note}/10 ★`}</CustomText>
-                                                            {/* {' )'} */}
-                                                        </CustomText>
-                                                    </View>
-
-                                                    <View style={styles.ratingContainer}>
-                                                        <View style={styles.rating}>
-
-                                                            <View style={styles.ratingNumberContainer}>
-                                                                <CustomText style={styles.ratingNumber}>0</CustomText>
-                                                            </View>
-
-                                                            <View style={styles.ratingBarContainer}>
-                                                                <View style={[styles.ratingBar, {width: `${(formattedData.note / 10) * 100}%`}]}>
-                                                                    <Text
-                                                                        aria-label=''
-                                                                        style={styles.ratingBarText}
-                                                                    >
-                                                                        {Array(Math.ceil(screenWidth / 10)).fill('/').join('')} {/* Fills the screen regardless of the width */}
-                                                                    </Text>
-                                                                </View>
-                                                            </View>
-
-                                                            <View style={styles.ratingNumberContainer}>
-                                                                <CustomText style={styles.ratingNumber}>10</CustomText>
-                                                            </View>
-
-                                                        </View>
-                                                    </View>
-                                                </View>
-
-                                                <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
-                                                    <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
-
-                                                    <Image
-                                                        style={styles.reviewImg}
-                                                        source={
-                                                            require('../../assets/icons/review.png')
-                                                        }
-                                                    />
-                                                </Pressable>
-                                            </View>
-                                        </View>
-                                    </View>
-
-                                    <View style={[styles.section, { paddingHorizontal: 0, marginTop: 10 }]}>
-                                        <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
-
-                                        <View>
-                                            {data.reviews.results && data.reviews.results.length > 0 ? (
-                                                <Carousel
-                                                    navigation={navigation} 
-                                                    items={data.reviews.results.map((review) => (
-                                                        <Review key={review.id} review={review} />
-                                                    ))}
-                                                    itemsVisible={10}
-                                                    controls={true}
-                                                    seeMore={'reviews'}
-                                                    // slidePadding={15}
-                                                    infiniteScroll={true}
+                            {/* <View style={[styles.backdrop, {height: 220}]}>
+                                <Carousel
+                                    navigation={navigation} 
+                                    items={backdropData.map((backdrop, index) => (
+                                        <Pressable onPress={() => {console.log('selected')}} style={{width: '100%', height: '100%'}}>
+                                            <View key={index} style={{width: '100%', height: '100%'}}>
+                                                <CustomImage
+                                                    source={backdrop.file_path}
+                                                    style={{width: '100%', height: '100%'}}
+                                                    fallback={null}
                                                 />
-                                            ) : (
-                                                <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
-                                            )}
+                                            </View>
+                                        </Pressable>
+                                    ))}
+                                    // itemsVisible={5}
+                                    infiniteScroll={true}
+                                    automaticScroll={true}
+                                    automaticScrollSpeed={2}
+                                    // controls={true}
+                                />
+                            </View> */}
+                            <CustomImage
+                                source={data.backdrop_path}
+                                style={styles.backdrop}
+                                fallback={null}
+                            />
+                        </View>
+
+                        <View style={[styles.content,
+                            {
+                                marginTop: data.backdrop_path ? 170 : 50
+                            }
+                        ]}>
+                            <View style={{paddingHorizontal: 15}}>
+                                <View style={styles.preview}>
+                                    <View style={styles.infos}>
+                                        <Animated.View style={[styles.titleContainer, 
+                                            {
+                                                opacity: Animated.subtract(1, animatedHeaderOpacity),
+                                                justifyContent: data.backdrop_path ? 'flex-end' : 'flex-start'
+                                            }
+                                        ]}>
+                                            <CustomText numberOfLines={2} ellipsizeMode='tail' style={styles.title}>{ data.title }</CustomText>
+                                        </Animated.View>
+
+                                        <View style={styles.details}>
+                                            <View>
+                                                <View style={styles.directorContainer}>
+                                                    <CustomText>{ formattedData.releaseDate }</CustomText>
+                                                    <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
+                                                </View>
+
+                                                <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                                                    {formattedData.director ? (
+                                                        formattedData.director.name
+                                                    ) : (
+                                                        'Unknow director'
+                                                    )}
+                                                </CustomText>
+                                            </View>
+                                            
+                                            <View style={styles.trailerContainer}>
+                                                <Pressable onPress={() => handleTrailerLink(formattedData.trailer)} style={[styles.trailerBtn,
+                                                    { 
+                                                        borderColor: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker'] 
+                                                    }
+                                                ]}>
+                                                    <CustomText style={
+                                                        {
+                                                            color: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker']
+                                                        }
+                                                    }> ► TRAILER </CustomText>
+                                                </Pressable>
+
+                                                <CustomText>{ formattedData.duration }</CustomText>
+                                            </View>
                                         </View>
                                     </View>
+
+                                    <CustomModal ref={modalPosterRef}
+                                        navigation={navigation}
+                                        content={
+                                            <PressableOrView
+                                                condition={modalPostersData && modalPostersData.length > 1}
+                                                onPress={() => {
+                                                    navigation.navigate('Posters', { movieId: data.id, screenWidth: screenWidth })
+                                                    closeModal(modalPosterRef)
+                                                }}
+                                            >
+                                                <CustomImage
+                                                    source={data.poster_path}
+                                                    style={{
+                                                        width: screenWidth - 50,
+                                                        maxWidth: 360,
+                                                        aspectRatio: 0.667, // default aspect ratio
+                                                        borderRadius: 10,
+                                                        borderWidth: 1,
+                                                        borderColor: Theme.colors.secondary
+                                                    }}
+                                                />
+                                            </PressableOrView>
+                                        }
+                                    />
+                                    <PressableOrView condition={data.poster_path} onPress={() => {openModal(modalPosterRef)}} style={styles.poster}>
+                                        <CustomImage
+                                            source={data.poster_path}
+                                            style={{width: '100%', height: '100%'}}
+                                            fallback={'poster'}
+                                            fallbackContent={data.title}
+                                        />
+                                    </PressableOrView>
                                 </View>
                                 
-                                <View style={{paddingHorizontal: 15}}>
+                                <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
+                                    <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight }}>
+                                        <Animated.View style={[styles.linearGradientContainer, { height: '100%', opacity: animatedLinearGradientOpacity }]}>
+                                            <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                                <View style={[styles.linearGradient, { height: 50 }]}></View>
+                                            </LinearGradient>
+                                        </Animated.View>
+                                        
+                                        <View onLayout={onLayout} style={styles.overviewContainer}>
+                                            {data.tagline ? (
+                                                <CustomText style={styles.tagline}>{data.tagline}</CustomText>
+                                            ) : (
+                                                null
+                                            )}
+                                            <CustomText style={styles.overview}>{data.overview}</CustomText>
+                                        </View>
+                                    </Animated.View>
+                                </Pressable>
+
+                                {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
+
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
+                                    {data && data.genres.map((genre, index) => (
+                                        <Pressable onPress={() => navigation.navigate('Genre', { genreId: genre.id })} key={index} style={styles.genre}>
+                                            <CustomText style={{color: Theme.colors.primaryDarker}}>{genre.name}</CustomText>
+                                        </Pressable>
+                                    ))}
+                                </ScrollView>
+                            </View>
+
+                            <View style={styles.sectionContainer}>
+                                <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
+                                    <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
+
+                                    {formattedData.providers ? (
+                                        <View style={styles.providerContainer}>
+                                            <View style={styles.providerContainer}>
+                                                {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
+                                                    <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
+                                                        <CustomImage
+                                                            source={provider.logo_path}
+                                                            style={styles.provider}
+                                                            fallback={'provider'}
+                                                        />
+
+                                                    </Pressable>
+                                                ))}
+                                            </View>
+
+                                            <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
+                                        </View>
+                                    ) : (
+                                        <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
+                                    )}
+                                </View>
+
+                                <View style={styles.section}>
+                                    <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
+
                                     <View>
-                                        <View style={styles.tabBtnContainer}>
-                                            <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
-                                            </Pressable>
+                                        <View style={styles.reviewContainer}>
+                                            <View style={styles.reviewInfos}>
+                                                <View style={{ marginBottom: 7.5}}>
+                                                    <CustomText>
+                                                        {/* {'( '} */}
+                                                        <CustomText style={styles.reviewDetails}>{ formattedData.votes }</CustomText>
+                                                        {' ratings - '}
+                                                        <CustomText style={styles.reviewDetails}>{`${formattedData.note}/10 ★`}</CustomText>
+                                                        {/* {' )'} */}
+                                                    </CustomText>
+                                                </View>
 
-                                            <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
-                                            </Pressable>
+                                                <View style={styles.ratingContainer}>
+                                                    <View style={styles.rating}>
 
-                                            <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
-                                                <CustomText style={whichTabBtn('details')}> Details </CustomText>
+                                                        <View style={styles.ratingNumberContainer}>
+                                                            <CustomText style={styles.ratingNumber}>0</CustomText>
+                                                        </View>
+
+                                                        <View style={styles.ratingBarContainer}>
+                                                            <View style={[styles.ratingBar, {width: `${(formattedData.note / 10) * 100}%`}]}>
+                                                                <Text
+                                                                    aria-label=''
+                                                                    style={styles.ratingBarText}
+                                                                >
+                                                                    {Array(Math.ceil(screenWidth / 10)).fill('/').join('')} {/* Fills the screen regardless of the width */}
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+
+                                                        <View style={styles.ratingNumberContainer}>
+                                                            <CustomText style={styles.ratingNumber}>10</CustomText>
+                                                        </View>
+
+                                                    </View>
+                                                </View>
+                                            </View>
+
+                                            <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
+                                                <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
+
+                                                <Image
+                                                    style={styles.reviewImg}
+                                                    source={
+                                                        require('../../assets/icons/review.png')
+                                                    }
+                                                />
                                             </Pressable>
-                                        </View> 
+                                        </View>
                                     </View>
-                                    <View style={styles.figureContainer}>
-                                        {/* <Pressable onPress={handleToggleImages}>
-                                            <CustomText>Show all images</CustomText>
-                                        </Pressable> */}
+                                </View>
 
-                                        <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
+                                <View style={[styles.section, { paddingHorizontal: 0, marginTop: 10 }]}>
+                                    <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
+
+                                    <View>
+                                        {data.reviews.results && data.reviews.results.length > 0 ? (
+                                            <Carousel
+                                                navigation={navigation} 
+                                                items={data.reviews.results.map((review) => (
+                                                    <Review key={review.id} review={review} />
+                                                ))}
+                                                itemsVisible={10}
+                                                controls={true}
+                                                seeMore={'reviews'}
+                                                // slidePadding={15}
+                                                infiniteScroll={true}
+                                            />
+                                        ) : (
+                                            <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
+                                        )}
+                                    </View>
+                                </View>
+                            </View>
+                            
+                            <View style={{paddingHorizontal: 15}}>
+                                <View>
+                                    <View style={styles.tabBtnContainer}>
+                                        <Pressable onPress={() => handleToggleTab('cast')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('cast')}> Cast </CustomText>
+                                        </Pressable>
+
+                                        <Pressable onPress={() => handleToggleTab('crew')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('crew')}> Crew </CustomText>
+                                        </Pressable>
+
+                                        <Pressable onPress={() => handleToggleTab('details')} style={styles.tabBtn}>
+                                            <CustomText style={whichTabBtn('details')}> Details </CustomText>
+                                        </Pressable>
+                                    </View> 
+                                </View>
+                                <View style={styles.figureContainer}>
+                                    {/* <Pressable onPress={handleToggleImages}>
+                                        <CustomText>Show all images</CustomText>
+                                    </Pressable> */}
+
+                                    <View style={[styles.linearGradientContainer, { height: 350, pointerEvents: 'box-none' }]}>
+                                        <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
+                                            <View style={[styles.linearGradient, { height: 50 }]}></View>
+                                        </LinearGradient>
+                                    </View>
+                                    
+                                    {selectedTab === 'crew' || selectedTab === 'cast' ? (
+                                        <Figures
+                                            figures={formattedData.figures[selectedTab]}
+                                            selectedTab={selectedTab}
+                                            figuresVisible={figuresVisible}
+                                        />
+                                    ) : (
+                                        <Details details={formattedData.details}></Details>
+                                    )}
+                                </View>
+                            </View>
+
+                            {data.belongs_to_collection ? (
+                                <View style={styles.section}>
+                                    <CustomText style={styles.sectionTitle}>Belongs to this saga</CustomText>
+
+                                    <Pressable onPress={() => navigation.navigate('Collection', { collectionId: data.belongs_to_collection.id })} style={styles.collectionContainer}>
+                                        <View style={styles.collection}>
+                                            <CustomText style={styles.collectionTitle}>
+                                                {removeLastWord(data.belongs_to_collection.name)}
+                                            </CustomText>
+                                        </View>
+                                        
+                                        <View style={[styles.linearGradientContainer, { height: 150 }]}>
                                             <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
                                                 <View style={[styles.linearGradient, { height: 50 }]}></View>
                                             </LinearGradient>
                                         </View>
-                                        
-                                        {selectedTab === 'crew' || selectedTab === 'cast' ? (
-                                            <Figures
-                                                figures={formattedData.figures[selectedTab]}
-                                                selectedTab={selectedTab}
-                                                figuresVisible={figuresVisible}
-                                            />
-                                        ) : (
-                                            <Details details={formattedData.details}></Details>
-                                        )}
-                                    </View>
+
+                                        <CustomImage
+                                            source={data.belongs_to_collection.backdrop_path}
+                                            style={styles.collectionBackdrop}
+                                            fallback={'collectionBackdrop'}
+                                        />
+                                    </Pressable>
                                 </View>
+                            ) : (
+                                null
+                            )}
 
-                                {data.belongs_to_collection ? (
-                                    <View style={styles.section}>
-                                        <CustomText style={styles.sectionTitle}>Belongs to this saga</CustomText>
+                            {formattedData.similarMovies ? (
+                                <View style={styles.section}>
+                                    <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
+                                    <MoviesHorizontalList movies={formattedData.similarMovies} navigation={navigation}></MoviesHorizontalList>
+                                </View>
+                            ) : (
+                                null
+                            )}
 
-                                        <Pressable onPress={() => navigation.navigate('Collection', { collectionId: data.belongs_to_collection.id })} style={styles.collectionContainer}>
-                                            <View style={styles.collection}>
-                                                <CustomText style={styles.collectionTitle}>
-                                                    {removeLastWord(data.belongs_to_collection.name)}
-                                                </CustomText>
-                                            </View>
-                                            
-                                            <View style={[styles.linearGradientContainer, { height: 150 }]}>
-                                                <LinearGradient colors={[Theme.colors.secondaryDarker, 'transparent']}>
-                                                    <View style={[styles.linearGradient, { height: 50 }]}></View>
-                                                </LinearGradient>
-                                            </View>
+                            {formattedData.websites ? (
+                                <View style={styles.section}>
+                                    <CustomText style={styles.sectionTitle}>External links</CustomText>
 
-                                            <CustomImage
-                                                source={data.belongs_to_collection.backdrop_path}
-                                                style={styles.collectionBackdrop}
-                                                fallback={'collectionBackdrop'}
-                                            />
-                                        </Pressable>
-                                    </View>
-                                ) : (
-                                    null
-                                )}
-
-                                {formattedData.similarMovies ? (
-                                    <View style={styles.section}>
-                                        <CustomText style={styles.sectionTitle}>Similar movies</CustomText>
-                                        <MoviesHorizontalList movies={formattedData.similarMovies} navigation={navigation}></MoviesHorizontalList>
-                                    </View>
-                                ) : (
-                                    null
-                                )}
-
-                                {formattedData.websites ? (
-                                    <View style={styles.section}>
-                                        <CustomText style={styles.sectionTitle}>External links</CustomText>
-
-                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.externalLinkContainer}>
-                                            {data.homepage ? (
-                                                <Pressable onPress={() => handleWebsites(null, data.homepage)} style={styles.externalLink}>
-                                                    <CustomText style={{color: Theme.colors.primaryDarker}}>Website</CustomText>
-                                                </Pressable>
-                                            ) : (
-                                                null
-                                            )}
-                                            
-                                            {formattedData.websites.map((website, index) => (
-                                                <Pressable key={index} onPress={() => handleWebsites(website.website, website.id)} style={styles.externalLink}>
-                                                    <CustomText style={{color: Theme.colors.primaryDarker}}>{website.name}</CustomText>
-                                                </Pressable>
-                                            ))}
-                                        </ScrollView>
-                                    </View>
-                                ) : (
-                                    null
-                                )}
-                            </View>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.externalLinkContainer}>
+                                        {data.homepage ? (
+                                            <Pressable onPress={() => handleWebsites(null, data.homepage)} style={styles.externalLink}>
+                                                <CustomText style={{color: Theme.colors.primaryDarker}}>Website</CustomText>
+                                            </Pressable>
+                                        ) : (
+                                            null
+                                        )}
+                                        
+                                        {formattedData.websites.map((website, index) => (
+                                            <Pressable key={index} onPress={() => handleWebsites(website.website, website.id)} style={styles.externalLink}>
+                                                <CustomText style={{color: Theme.colors.primaryDarker}}>{website.name}</CustomText>
+                                            </Pressable>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            ) : (
+                                null
+                            )}
                         </View>
-                    </ScrollView>
-                </View>
-            ) : (
-                <CustomText>Chargement...</CustomText>
-            )}
-        </>
+                    </View>
+                </ScrollView>
+            </View>
+        ) : (
+            <CustomText>Chargement...</CustomText>
+        )
     )
 }
 export default Movie
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Theme.colors.secondaryDarker
-    },
-
-    headerContainer: {
-        zIndex: 10,
-        flex: 1,
-        width: '100%',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        pointerEvents: 'box-none'
-    },
-    header: {
-        zIndex: 11,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 7.5
-    },
-    headerBtn: {
-        height: 40,
-        width: 40,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        // borderRadius: '100%',
-        // backgroundColor: Theme.colors.secondaryDarker
-    },
-    headerBtnImg: {
-        zIndex: 13,
-        height: 20,
-        width: 20
-    },
-    headerBtnBackground: {
-        zIndex: 12,
-        position: 'absolute',
-        height: '100%',
-        width: '100%',
-        borderRadius: '100%',
-        backgroundColor: Theme.colors.secondaryDarker,
-        opacity: 0.5
-    },
-    headerBackground: {
-        flex: 1,
-        position: 'absolute',
-        height: '100%',
-        width: '100%',
-        borderBottomWidth: 1,
-        borderColor: Theme.colors.primary,
-        backgroundColor: Theme.colors.secondaryDarker
-    },
-
     linearGradientContainer: {
         zIndex: 1,
         position: 'absolute',
