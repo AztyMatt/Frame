@@ -8,6 +8,9 @@ import HomeTab from './tabs/HomeTab.jsx'
 import ResearchTab from './tabs/ResearchTab.jsx'
 import Theme from './assets/styles.js'
 import { EventProvider } from 'react-native-outside-press'
+import { getAsyncStorage } from './utils.js'
+
+getAsyncStorage()
 
 const Tab = createBottomTabNavigator()
 

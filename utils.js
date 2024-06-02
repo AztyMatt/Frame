@@ -1,4 +1,5 @@
 import { Linking } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Generic functions
 export const capitalizeFirstLetter = (word) => {
@@ -52,4 +53,28 @@ export const handleTrailerLink = (trailer) => { // Needs to be improved (if ?, d
         // console.log('No trailer found')
         null
     )
+}
+
+// AsyncStorage
+export const getAsyncStorage = async () => {
+    try {
+        const keys = await AsyncStorage.getAllKeys()
+        if (keys.length > 0) {
+            const result = await AsyncStorage.multiGet(keys)
+            console.log(result);
+        } else {
+            console.log("No data in AsyncStorage")
+        }
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+export const clearAsyncStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+        console.log('AsyncStorage cleared successfully.')
+    } catch (error) {
+        console.error('Error clearing AsyncStorage:', error)
+    }
 }

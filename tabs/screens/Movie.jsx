@@ -260,7 +260,6 @@ const Movie = ({ route, navigation }) => {
             setOnWatchlist(movieIndex !== -1 ? true : false)
         }
         checkWatchlist()
-
     }, [movieId])
 
     // Reviews
@@ -534,7 +533,7 @@ const Movie = ({ route, navigation }) => {
                                                 }}
                                             >
                                                 <CustomImage
-                                                    source={data.poster_path}
+                                                    source={{poster_path: data.poster_path, movieId: data.id}}
                                                     style={{
                                                         width: screenWidth - 50,
                                                         maxWidth: 360,
@@ -549,13 +548,15 @@ const Movie = ({ route, navigation }) => {
                                     />
                                     <PressableOrView condition={data.poster_path} onPress={() => {openModal(modalPosterRef)}} style={styles.poster}>
                                         <CustomImage
-                                            source={data.poster_path}
+                                            source={{poster_path: data.poster_path, movieId: data.id}}
                                             style={{width: '100%', height: '100%'}}
                                             fallback={'poster'}
                                             fallbackContent={data.title}
                                         />
                                     </PressableOrView>
                                 </View>
+
+                                {/* <CustomText>{JSON.stringify(currentPoster, null, 2)}</CustomText> */}
                                 
                                 <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
                                     <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight }}>

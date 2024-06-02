@@ -143,14 +143,14 @@ const Home = () => {
                     )}
 
                     {upcoming ? (
-                        <>
+                        <View>
                             <View style={styles.sectionSeparator}></View>
 
                             <View style={{ marginVertical: 25 }}>
                                 <CustomText style={styles.sectionTitle}>►  Upcoming this month</CustomText>
                                 <MoviesHorizontalList movies={upcoming.results} navigation={navigation}></MoviesHorizontalList>
                             </View>
-                        </>
+                        </View>
                     ) : (
                         null // Future skeleton
                     )}
@@ -265,12 +265,4 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap'
     },
-
-    poster: {
-        height: 150,
-        width: 100,
-        borderWidth: 1,
-        borderColor: Theme.colors.primaryDarker,
-        borderRadius: 5
-    }
 })

@@ -1,10 +1,33 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, Image, View } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { capitalizeFirstLetter } from '../../utils.js'
 import Theme from '../../assets/styles.js'
 import CustomText from './CustomText.jsx'
 
+const throwError = (message) => { throw new Error(message) }
+
 const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) => {
+    const [poster, setPoster] = useState(null)
+
+    const getPoster = async () => {
+        if (source && typeof source === 'object') {
+            source.poster_path === undefined && throwError('poster_path is undefined, it is required if an object is provided as the source.')
+            source.movieId === undefined && throwError('movieId is undefined, it is required if an object is provided as the source.')
+    
+            const customPoster = JSON.parse(await AsyncStorage.getItem(`@moviePoster-ID:${source.movieId}`))
+            setPoster(customPoster ? customPoster.poster_path : source.poster_path)
+        } else {
+            setPoster(source)
+        }
+    }
+
+    useFocusEffect(
+        useCallback(() => {
+            getPoster()
+        }, [source])
+    )
 
     const fallbacks = {
         Default: (fallbackSource) => () => (
@@ -69,8 +92,8 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
     const CustomFallback = CreateCustomFallback() // Clearer than using IIFE
 
     return (
-        source ? (
-            <Image style={style} resizeMode={resizeMode} source={{ uri: `https://image.tmdb.org/t/p/original${source}`}} />
+        poster ? (
+            <Image style={style} resizeMode={resizeMode} source={{uri: `https://image.tmdb.org/t/p/original${poster}`}} />
         ) : (
             fallback ? (
                 CustomFallback && <CustomFallback />
@@ -91,234 +114,3 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     }
 })
-
-// // Movie.jsx
-// {data.backdrop_path ? ( //
-//     <Image
-//         style={{ // backdrop 1
-//             position: 'absolute',
-//             width: '100%',
-//             height: 220,
-//             top: 0,
-//             left: 0,
-//         }}
-//         // resizeMode='contain' //
-//         source={{
-//             uri: `https://image.tmdb.org/t/p/original${data.backdrop_path}`,
-//         }}
-//     />
-// ) : (
-//     null //
-// )}
-
-// {data.poster_path ? (
-//     <Image
-//         style={{ // poster 2
-//             height: '100%',
-//             width: 120,
-//             borderWidth: 1,
-//             borderColor: Theme.colors.secondary,
-//             borderRadius: 10,
-//             backgroundColor: Theme.colors.secondaryDarker,
-//             marginLeft: 10,
-//             overflow: 'hidden'
-//         }}
-//         resizeMode='contain'
-//         source={{
-//             uri: `https://image.tmdb.org/t/p/original${data.poster_path}`,
-//         }}
-//     />
-// ) : (
-//     <View style={{ // poster 2
-//         height: '100%',
-//         width: 120,
-//         borderWidth: 1,
-//         borderColor: Theme.colors.secondary,
-//         borderRadius: 10,
-//         backgroundColor: Theme.colors.secondaryDarker,
-//         marginLeft: 10,
-//         overflow: 'hidden'
-//     }}>
-//         <Image
-//             style={{width: '100%', height: '100%'}}
-//             resizeMode='contain'
-//             source={
-//                 require('../../assets/poster.png')
-//             }
-//         />
-//         <View style={{position: 'absolute', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 10}}>
-//             <CustomText
-//                 style={{fontWeight: 'bold'}}
-//                 numberOfLines={2} ellipsizeMode='tail'
-//             >
-//                 { data.title }
-//             </CustomText>
-//         </View>
-//     </View>
-// )}
-
-// {provider.logo_path ? (
-//     <Image
-//         style={{ // provider 3
-//             height: 25,
-//             width: 25,
-//             borderWidth: 1,
-//             borderColor: Theme.colors.primaryDarker,
-//             borderRadius: 5
-//         }}
-//         resizeMode='contain'
-//         source={{
-//             uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
-//         }}
-//     />
-// ) : (
-//     <View style={{ // provider 3
-//         height: 25,
-//         width: 25,
-//         borderWidth: 1,
-//         borderColor: Theme.colors.primaryDarker,
-//         borderRadius: 5
-//     }}>
-//         <View style={{width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-//             <CustomText>?</CustomText>
-//         </View>
-//     </View>
-// )}
-
-// {data.belongs_to_collection.backdrop_path ? (
-//     <Image
-//         style={{ // backdrop 1
-//             position: 'absolute',
-//             width: '100%',
-//             height: 220,
-//             top: 0,
-//             left: 0,
-//         }}
-//         // resizeMode='contain'
-//         source={{
-//             uri: `https://image.tmdb.org/t/p/original${data.belongs_to_collection.backdrop_path}`,
-//         }}
-//     />
-// ) : (
-//     <Image
-//         style={{ // backdrop 1
-//             position: 'absolute',
-//             width: '100%',
-//             height: 220,
-//             top: 0,
-//             left: 0,
-//         }}
-//         // resizeMode='contain'
-//         source={require('../../assets/backdrop.png')}
-//     />
-// )}
-
-// // Home.jsx
-// {firstUpcoming.backdrop_path ? (
-//     <Image
-//         style={{ // backdrop (Home) 5
-//             height: 220,
-//         }}
-//         // resizeMode='contain'
-//         source={{
-//             uri: `https://image.tmdb.org/t/p/original${firstUpcoming.backdrop_path}`,
-//         }}
-//     />
-// ) : (
-//     null
-// )}
-
-// // MoviesHorizontalList.jsx
-// {movie.poster_path ? (
-//     <Image
-//         style={{ // poster (MoviesHorizontalList) 6
-//             height: 150,
-//             width: 100,
-//             borderWidth: 1,
-//             borderColor: Theme.colors.primaryDarker,
-//             borderRadius: 5,
-//             overflow: 'hidden'
-//         }}
-//         resizeMode='contain'
-//         source={{ uri: `https://image.tmdb.org/t/p/original${movie.poster_path}` }}
-//     />
-// ) : (
-//     <View style={{ // poster (MoviesHorizontalList) 6
-//         height: 150,
-//         width: 100,
-//         borderWidth: 1,
-//         borderColor: Theme.colors.primaryDarker,
-//         borderRadius: 5,
-//         overflow: 'hidden'
-//     }}>
-//         <Image
-//             style={{width: '100%', height: '100%'}}
-//             resizeMode='contain'
-//             source={
-//                 require('../assets/poster.png')
-//             }
-//         />
-//         <View style={{position: 'absolute', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 10}}>
-//             <CustomText
-//                 style={{fontWeight: 'bold'}}
-//                 numberOfLines={2} ellipsizeMode='tail'
-//             >
-//                 { movie.title }
-//             </CustomText>
-//         </View>
-//     </View>
-// )}
-
-// // Figures.jsx
-// {figure.profile_path ? (
-//     <Image
-//         style={{ // figureImage 7
-//             width: 50,
-//             height: 50,
-//             marginRight: 10,
-//             borderTopLeftRadius: 5,
-//             borderBottomLeftRadius: 5
-//         }}
-//         source={{ uri: `https://image.tmdb.org/t/p/w500${figure.profile_path}` }} // !
-//     />
-// ) : (
-//     <Image
-//         style={{ // figureImage 7
-//             width: 50,
-//             height: 50,
-//             marginRight: 10,
-//             borderTopLeftRadius: 5,
-//             borderBottomLeftRadius: 5
-//         }}
-//         source={require('../assets/icons/figure.png')}
-//     />
-// )}
-
-// // ReviewsCarousel.jsx
-// {review.author_details.avatar_path ? (
-//     <Image
-//         style={{ // authorAvatar 8
-//             height: 40,
-//             width: 40,
-//             borderWidth: 1,
-//             borderColor: Theme.colors.primaryDarker,
-//             borderRadius: 5
-//         }}
-//         resizeMode='cover'
-//         source={{
-//         uri: `https://image.tmdb.org/t/p/original${review.author_details.avatar_path}`,
-//         }}
-//     />
-// ) : (
-//     <Image
-//         style={{ // authorAvatar 8
-//             height: 40,
-//             width: 40,
-//             borderWidth: 1,
-//             borderColor: Theme.colors.primaryDarker,
-//             borderRadius: 5
-//         }}
-//         resizeMode='cover'
-//         source={require('../assets/icons/figure.png')}
-//     />
-// )}

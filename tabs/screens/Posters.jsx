@@ -8,6 +8,8 @@ import Header from '../../components/Header.jsx'
 
 import { api } from '../../services/api.js'
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 const Posters = ({ route, navigation}) => {
     const { movieId, screenWidth } = route.params
 
@@ -35,6 +37,20 @@ const Posters = ({ route, navigation}) => {
     const openModal = (item, ref) => {
         setPosterClicked(item)
         ref.current.openModal()
+    }
+
+    const manageSelectedPoster = async (posterClicked) => {
+        try {
+            const selectedPoster = {
+                poster_path: posterClicked.file_path,
+            }
+            await AsyncStorage.setItem(`@moviePoster-ID:${movieId}`, JSON.stringify(selectedPoster))
+
+            modalPosterRef.current.closeModal()
+            navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movieId } })
+        } catch (error) {
+            // console.error('Error updating poster:', error)
+        }
     }
 
     /**
@@ -158,6 +174,7 @@ const Posters = ({ route, navigation}) => {
                                                 }]}
                                             />
                                             <Pressable
+                                            onPress={() => manageSelectedPoster(posterClicked)}
                                                 style={styles.posterClickedBtn}
                                             >
                                                 <CustomText style={{ fontWeight: 'bold', textAlign: 'center' }}>Choose this poster</CustomText>

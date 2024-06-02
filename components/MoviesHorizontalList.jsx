@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { StyleSheet, View, ScrollView, Image, Pressable } from 'react-native'
+import { StyleSheet, ScrollView, Pressable } from 'react-native'
 import Theme from '../assets/styles.js'
 import CustomImage from './tags/CustomImage.jsx'
 
@@ -18,7 +18,7 @@ const MoviesHorizontalList = ({ movies, navigation }) => {
             {movies.map((movie, index) => (
                 <Pressable onPress={() => navigation.push('MovieTab', { screen: 'Movie', params: { movieId: movie.id } })} key={index} style={{ marginRight: 10 }}>
                     <CustomImage
-                        source={movie.poster_path}
+                        source={{poster_path: movie.poster_path, movieId: movie.id}}
                         style={styles.poster}
                         fallback={'poster'}
                         fallbackContent={movie.title}

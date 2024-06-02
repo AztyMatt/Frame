@@ -53,7 +53,7 @@ const Research = () => {
                     {apiResult.results.map((movie, index) => (
                         <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
                             <CustomImage
-                                source={movie.poster_path}
+                                source={{poster_path: movie.poster_path, movieId: movie.id}}
                                 style={styles.poster}
                                 fallback={'poster'}
                                 fallbackContent={movie.title}
