@@ -11,21 +11,19 @@ const throwError = (message) => { throw new Error(message) }
 const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) => {
     const [poster, setPoster] = useState(null)
 
-    const getPoster = async () => {
+    const handlePosterCase = async () => {
         if (source && typeof source === 'object') {
             source.poster_path === undefined && throwError('poster_path is undefined, it is required if an object is provided as the source.')
             source.movieId === undefined && throwError('movieId is undefined, it is required if an object is provided as the source.')
     
             const customPoster = JSON.parse(await AsyncStorage.getItem(`@moviePoster-ID:${source.movieId}`))
             setPoster(customPoster ? customPoster.poster_path : source.poster_path)
-        } else {
-            setPoster(source)
         }
     }
 
     useFocusEffect(
         useCallback(() => {
-            getPoster()
+            handlePosterCase()
         }, [source])
     )
 
@@ -92,8 +90,8 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
     const CustomFallback = CreateCustomFallback() // Clearer than using IIFE
 
     return (
-        poster ? (
-            <Image style={style} resizeMode={resizeMode} source={{uri: `https://image.tmdb.org/t/p/original${poster}`}} />
+        source ? (
+            <Image style={style} resizeMode={resizeMode} source={{uri: `https://image.tmdb.org/t/p/original${poster || source}`}} />
         ) : (
             fallback ? (
                 CustomFallback && <CustomFallback />
