@@ -3,12 +3,12 @@ import '@expo/metro-runtime'
 import React from 'react'
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { SafeAreaView, Image } from 'react-native'
+import { SafeAreaView, StatusBar, Image } from 'react-native'
 import HomeTab from './tabs/HomeTab.jsx'
 import ResearchTab from './tabs/ResearchTab.jsx'
 import Theme from './assets/styles.js'
 import { EventProvider } from 'react-native-outside-press'
-import { getAsyncStorage } from './utils.js'
+import { getAsyncStorage, clearAsyncStorage } from './utils.js'
 
 getAsyncStorage()
 
@@ -25,7 +25,12 @@ const MyTheme = {
 const App = () => {
     return (
         <EventProvider>
-            <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}></SafeAreaView>
+            <SafeAreaView style={{ backgroundColor: Theme.colors.secondaryDarker }}>
+                <StatusBar
+                    barStyle="light-content" // Can be set to "default", "light-content" or "dark-content"
+                    backgroundColor={Theme.colors.secondaryDarker}
+                />
+            </SafeAreaView>
 
             <NavigationContainer theme={MyTheme}>
                 <Tab.Navigator 

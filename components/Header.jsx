@@ -5,7 +5,7 @@ import CustomText from '../components/tags/CustomText.jsx'
 import PressableOrView from '../components/tags/PressableOrView'
 
 const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity = 1, additionalBtn = false }) => {
-    const {onPress, imageSource} = additionalBtn
+    const {onPress, isImage = true, source} = additionalBtn
 
     return (
         <View style={[styles.headerContainer, absolute && {
@@ -31,10 +31,14 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
                 <PressableOrView condition={additionalBtn} onPress={onPress} style={styles.headerBtn}>
                     {additionalBtn ? (
                         <>
-                            <Image
-                                style={styles.headerBtnImg}
-                                source={imageSource}
-                            />
+                            {isImage ? (
+                                <Image
+                                    style={styles.headerBtnImg}
+                                    source={source}
+                                />
+                            ) : (
+                                <CustomText style={styles.headerBtnTxt}>{source}</CustomText>
+                            )}
                             <View style={styles.headerBtnBackground}></View>
                         </>
                     ) : (
@@ -76,6 +80,12 @@ const styles = StyleSheet.create({
         zIndex: 13,
         height: 20,
         width: 20
+    },
+    headerBtnTxt: {
+        zIndex: 13,
+        color: Theme.colors.primary,
+        fontSize: 15,
+        fontWeight: 'bold'
     },
     headerBtnBackground: {
         zIndex: 12,

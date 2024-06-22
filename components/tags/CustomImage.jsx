@@ -15,7 +15,9 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
         if (source && typeof source === 'object') {
             source.poster_path === undefined && throwError('poster_path is undefined, it is required if an object is provided as the source.')
             source.movieId === undefined && throwError('movieId is undefined, it is required if an object is provided as the source.')
-    
+
+            // console.log(source)
+
             const customPoster = JSON.parse(await AsyncStorage.getItem(`@moviePoster-ID:${source.movieId}`))
             setPoster(customPoster ? customPoster.poster_path : source.poster_path)
         }
@@ -90,8 +92,8 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
     const CustomFallback = CreateCustomFallback() // Clearer than using IIFE
 
     return (
-        source ? (
-            <Image style={style} resizeMode={resizeMode} source={{uri: `https://image.tmdb.org/t/p/original${poster || source}`}} />
+        (source && typeof source === 'string') || poster ? (
+            <Image style={style} resizeMode={resizeMode} source={{ uri: `https://image.tmdb.org/t/p/original${poster || source}` }} />
         ) : (
             fallback ? (
                 CustomFallback && <CustomFallback />

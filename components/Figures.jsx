@@ -6,39 +6,36 @@ import CustomImage from './tags/CustomImage'
 
 const Figures = ({figures, figuresVisible, selectedTab}) => {
     return (
-        <>
-            {figures && figures.slice(0, figuresVisible).map((figure, index) => (
-                figure ? (
-                    <View key={index} style={styles.figureContainer}>
-                        <View style={styles.figureInfos}>
-                            <CustomImage
-                                source={figure.profile_path}
-                                style={styles.figureImage}
-                                fallback={'default'}
-                                fallbackContent={require('../assets/icons/figure.png')}
-                            />
+        figures && figures.slice(0, figuresVisible).map((figure, index) => (
+            figure ? (
+                <View key={index} style={styles.figureContainer}>
+                    <View style={styles.figureInfos}>
+                        <CustomImage
+                            source={figure.profile_path}
+                            style={styles.figureImage}
+                            fallback={'default'}
+                            fallbackContent={require('../assets/icons/figure.png')}
+                        />
 
-                            <View style={{ flexShrink: 1 }}>
-                                {/* <CustomText>{JSON.stringify(figure, null, 2)}</CustomText> */}
-                                <CustomText style={{ fontWeight: 'bold', fontSize: 15 }}>{figure.name || 'Unknow name'}</CustomText>
-                                {selectedTab === 'cast' && <CustomText>{figure.character || 'Unknow character'}</CustomText>}
-                                {selectedTab === 'crew' && <CustomText numberOfLines={1} ellipsizeMode='tail'>
-                                    {figure.department || 'Unknow department'}
-                                    {' - '}
-                                    {figure.job || 'Unknow job'}
-                                </CustomText>}
-                            </View>
-                        </View>
-
-                        <View style={styles.figureArrowContainer}>
-                            <CustomText style={{ fontWeight: 'bold', fontSize: 20 }}>➤</CustomText>
+                        <View style={{ flexShrink: 1 }}>
+                            <CustomText style={{ fontWeight: 'bold', fontSize: 15 }}>{figure.name || 'Unknow name'}</CustomText>
+                            {selectedTab === 'cast' && <CustomText>{figure.character || 'Unknow character'}</CustomText>}
+                            {selectedTab === 'crew' && <CustomText numberOfLines={1} ellipsizeMode='tail'>
+                                {figure.department || 'Unknow department'}
+                                {' - '}
+                                {figure.job || 'Unknow job'}
+                            </CustomText>}
                         </View>
                     </View>
-                ) : (
-                    null
-                )
-            ))}
-        </>
+
+                    <View style={styles.figureArrowContainer}>
+                        <CustomText style={{ fontWeight: 'bold', fontSize: 20 }}>➤</CustomText>
+                    </View>
+                </View>
+            ) : (
+                null
+            )
+        ))
     )
 }
 export default Figures

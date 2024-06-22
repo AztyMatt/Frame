@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
         borderWidth: 1,
         borderColor: Theme.colors.primaryDarker,
-        borderRadius: 5
+        borderRadius: 5,
+        backgroundColor: Theme.colors.secondaryDarker
     },
 })

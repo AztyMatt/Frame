@@ -30,24 +30,24 @@ const CustomModal = forwardRef(({ content, handleModalData }, ref) => {
 
     return (
         <Modal
-                animationType="fade"
-                transparent={true}
-                visible={isModalVisible}
-                onRequestClose={closeModal}
-                presentationStyle='overFullScreen'
-            >
-                <View style={styles.modalBackground}>
-                        <View>
-                            <OutsidePressHandler
-                                onOutsidePress={() => {
-                                    closeModal()
-                                }}
-                            >
-                                {content}
-                            </OutsidePressHandler>
-                        </View>
-                </View>
-            </Modal>
+            animationType="fade"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={closeModal}
+            presentationStyle='overFullScreen'
+        >
+            <View style={styles.modalBackground}>
+                    <View>
+                        <OutsidePressHandler
+                            onOutsidePress={() => {
+                                closeModal()
+                            }}
+                        >
+                            {content}
+                        </OutsidePressHandler>
+                    </View>
+            </View>
+        </Modal>
     )
 })
 export default CustomModal

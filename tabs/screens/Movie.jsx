@@ -42,7 +42,7 @@ const Movie = ({ route, navigation }) => {
     const HeaderScrollY = useState(new Animated.Value(0))[0]
 
     // Posters
-    const [modalPostersData, setModalPostersData] = useState(null)
+    const [areMultiplesPosters, setAreMultiplesPosters] = useState(false)
 
     // Overview
     const maxOverviewHeight = 110
@@ -239,7 +239,7 @@ const Movie = ({ route, navigation }) => {
                 setData(result)
 
                 const resultImagesData = await api(`/movie/${movieId}/images?language=en`)
-                setModalPostersData(resultImagesData.posters)
+                setAreMultiplesPosters(resultImagesData.posters.length > 1 ? true : false)
 
                 // Reset
                 return navigation.addListener('focus', () => {
@@ -278,7 +278,9 @@ const Movie = ({ route, navigation }) => {
     const formattedData = useMemo(() => {
         if (!data) return {}
 
-        // Generic formatting
+        /**
+         * Generic formatting
+         */
         const releaseDate = formatDateToYear(data.release_date)
         const duration = formatDuration(data.runtime)
         const note = formatNote(data.vote_average)
@@ -429,7 +431,7 @@ const Movie = ({ route, navigation }) => {
 
                     additionalBtn={{
                         onPress: () => manageWatchlist(),
-                        imageSource: onWatchlist
+                        source: onWatchlist
                             ? require('../../assets/icons/watchlist.png')
                             : require('../../assets/icons/watchlistOff.png')
                     }}
@@ -526,9 +528,9 @@ const Movie = ({ route, navigation }) => {
                                         navigation={navigation}
                                         content={
                                             <PressableOrView
-                                                condition={modalPostersData && modalPostersData.length > 1}
+                                                condition={areMultiplesPosters}
                                                 onPress={() => {
-                                                    navigation.navigate('Posters', { movieId: data.id, screenWidth: screenWidth })
+                                                    navigation.navigate('Posters', { movieId: data.id, poster_path: data.poster_path, screenWidth: screenWidth })
                                                     closeModal(modalPosterRef)
                                                 }}
                                             >
@@ -555,8 +557,6 @@ const Movie = ({ route, navigation }) => {
                                         />
                                     </PressableOrView>
                                 </View>
-
-                                {/* <CustomText>{JSON.stringify(currentPoster, null, 2)}</CustomText> */}
                                 
                                 <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
                                     <Animated.View style={{ height: isOverviewExpandable ? animatedOverviewHeight : overviewHeight }}>
@@ -910,17 +910,18 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     trailerBtn: {
-        height: 30,
+        // height: 30,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderWidth: 1,
         borderRadius: 5,
-        marginRight: 10
+        marginRight: 10,
+        backgroundColor: Theme.colors.secondaryDarker
     },
 
     poster: {
         height: '100%',
-        width: 120, // -> Needs to be improved
+        width: 120, // Needs to be improved
         borderWidth: 1,
         borderColor: Theme.colors.secondary,
         borderRadius: 10,
