@@ -9,7 +9,7 @@ import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
 import CustomModal from '../../components/tags/CustomModal.jsx'
-import PressableOrView from '../../components/tags/PressableOrView'
+import CustomPressable from '../../components/tags/CustomPressable'
 import Header from '../../components/Header.jsx'
 import Carousel from '../../components/Carousel.jsx'
 import Review from '../../components/Review.jsx'
@@ -506,20 +506,17 @@ const Movie = ({ route, navigation }) => {
                                                 </CustomText>
                                             </View>
                                             
-                                            <View style={styles.trailerContainer}>
-                                                <Pressable onPress={() => handleTrailerLink(formattedData.trailer)} style={[styles.trailerBtn,
-                                                    { 
-                                                        borderColor: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker'] 
-                                                    }
-                                                ]}>
-                                                    <CustomText style={
-                                                        {
-                                                            color: Theme.colors[formattedData.trailer ? 'primary' : 'primaryDarker']
-                                                        }
-                                                    }> ► TRAILER </CustomText>
-                                                </Pressable>
+                                            <View style={styles.trailerAndDurationContainer}>
+                                                <CustomPressable
+                                                    onPress={() => handleTrailerLink(formattedData.trailer)}
+                                                    isInactiveWhen={!formattedData.trailer}
+                                                    styleButtonWithLabel={'► TRAILER'}
+                                                    style={styles.trailerBtn}
+                                                />
 
-                                                <CustomText>{ formattedData.duration }</CustomText>
+                                                <View style={styles.durationContainer}>
+                                                    <CustomText>{ formattedData.duration }</CustomText>
+                                                </View>
                                             </View>
                                         </View>
                                     </View>
@@ -527,12 +524,12 @@ const Movie = ({ route, navigation }) => {
                                     <CustomModal ref={modalPosterRef}
                                         navigation={navigation}
                                         content={
-                                            <PressableOrView
-                                                condition={areMultiplesPosters}
+                                            <CustomPressable
                                                 onPress={() => {
                                                     navigation.navigate('Posters', { movieId: data.id, poster_path: data.poster_path, screenWidth: screenWidth })
                                                     closeModal(modalPosterRef)
                                                 }}
+                                                isInactiveWhen={!areMultiplesPosters}
                                             >
                                                 <CustomImage
                                                     source={{poster_path: data.poster_path, movieId: data.id}}
@@ -545,17 +542,17 @@ const Movie = ({ route, navigation }) => {
                                                         borderColor: Theme.colors.secondary
                                                     }}
                                                 />
-                                            </PressableOrView>
+                                            </CustomPressable>
                                         }
                                     />
-                                    <PressableOrView condition={data.poster_path} onPress={() => {openModal(modalPosterRef)}} style={styles.poster}>
+                                    <CustomPressable onPress={() => {openModal(modalPosterRef)}} isInactiveWhen={!data.poster_path} style={styles.poster}>
                                         <CustomImage
                                             source={{poster_path: data.poster_path, movieId: data.id}}
                                             style={{width: '100%', height: '100%'}}
                                             fallback={'poster'}
                                             fallbackContent={data.title}
                                         />
-                                    </PressableOrView>
+                                    </CustomPressable>
                                 </View>
                                 
                                 <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
@@ -904,19 +901,19 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
 
-    trailerContainer: {
+    trailerAndDurationContainer: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center'
     },
     trailerBtn: {
-        // height: 30,
         paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderWidth: 1,
-        borderRadius: 5,
-        marginRight: 10,
-        backgroundColor: Theme.colors.secondaryDarker
+        marginRight: 10
+    },
+    durationContainer: {
+        height: '100%',
+        display: 'flex',
+        justifyContent:'center'
     },
 
     poster: {

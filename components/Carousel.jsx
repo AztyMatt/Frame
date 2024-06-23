@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Dimensions, View, FlatList, Pressable } from 'react-native'
 import Theme from '../assets/styles.js'
 import CustomText from './tags/CustomText.jsx'
+import CustomPressable from './tags/CustomPressable.jsx'
 
 // obsolete
 const width = Dimensions.get('window').width
@@ -156,9 +157,11 @@ const Carousel = (
                         </View>
 
                         {seeMore ? (
-                            <Pressable style={styles.seeMoreBtn} onPress={() => console.log("Want to see more")}>
-                                <CustomText style={{ fontWeight: 'bold' }}>See more {seeMore}</CustomText>
-                            </Pressable>
+                            <CustomPressable
+                                onPress={() => console.log("Want to see more")}
+                                styleButtonWithLabel={`See more ${seeMore}`}
+                                style={styles.seeMoreBtn}
+                            />
                         ) : (
                             null
                         )}
@@ -213,14 +216,5 @@ const styles = StyleSheet.create({
     },
     activeControlsBtn: {
         backgroundColor: Theme.colors.primary,
-    },
-
-    seeMoreBtn: {
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderWidth: 1,
-        borderColor: Theme.colors.primaryDarker,
-        borderRadius: 5,
-        backgroundColor: Theme.colors.secondaryDarker
     },
 })

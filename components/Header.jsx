@@ -2,7 +2,7 @@ import React from 'react'
 import { StyleSheet, View, Image, Pressable, Animated } from 'react-native'
 import Theme from '../assets/styles.js'
 import CustomText from '../components/tags/CustomText.jsx'
-import PressableOrView from '../components/tags/PressableOrView'
+import CustomPressable from '../components/tags/CustomPressable'
 
 const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity = 1, additionalBtn = false }) => {
     const {onPress, isImage = true, source} = additionalBtn
@@ -28,7 +28,7 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
                     <CustomText numberOfLines={1} ellipsizeMode='tail' style={[styles.title, {textAlign: 'center'}]}>{ title }</CustomText>
                 </Animated.View>
     
-                <PressableOrView condition={additionalBtn} onPress={onPress} style={styles.headerBtn}>
+                <CustomPressable onPress={onPress} isInactiveWhen={!additionalBtn} style={styles.headerBtn}>
                     {additionalBtn ? (
                         <>
                             {isImage ? (
@@ -44,7 +44,7 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
                     ) : (
                         null
                     )}
-                </PressableOrView>
+                </CustomPressable>
             </View>
             
             <Animated.View style={[styles.headerBackground, { opacity: opacity }]}></Animated.View>

@@ -5,7 +5,7 @@ import languages from '../../assets/languages.json'
 import CustomText from '../../components/tags/CustomText.jsx'
 import CustomImage from '../../components/tags/CustomImage.jsx'
 import CustomModal from '../../components/tags/CustomModal.jsx'
-import PressableOrView from '../../components/tags/PressableOrView'
+import CustomPressable from '../../components/tags/CustomPressable'
 import Header from '../../components/Header.jsx'
 
 import { api } from '../../services/api.js'
@@ -175,9 +175,9 @@ const Posters = ({ route, navigation}) => {
      */
     const Poster = ({ item, index }) => (
         <View key={index} style={styles.posterContainer}>
-            <PressableOrView
-                condition={currentPoster !== item.file_path} 
+            <CustomPressable
                 onPress={() => openModal(item, modalPosterRef)}
+                isInactiveWhen={currentPoster == item.file_path} 
                 style={[
                     styles.posterBtn,
                     {
@@ -214,7 +214,7 @@ const Posters = ({ route, navigation}) => {
                         }
                     ]}
                 />
-            </PressableOrView>
+            </CustomPressable>
         </View>
     )
 
@@ -258,16 +258,12 @@ const Posters = ({ route, navigation}) => {
                                     ))}
                                 </ScrollView>
 
-                                <PressableOrView
-                                    condition={currentPoster !== poster_path}
-                                    style={[
-                                        styles.btn,
-                                        { borderColor: Theme.colors[currentPoster !== poster_path ? 'primaryDarker' : 'secondary'] }
-                                    ]}
-                                    onPress={() => handleRestore()
-                                }>
-                                    <CustomText style={{ fontWeight: 'bold', textAlign: 'center', opacity: currentPoster !== poster_path ? 1 : 0.25 }}>Restore poster to default</CustomText>
-                                </PressableOrView>
+                                <CustomPressable
+                                    onPress={() => handleRestore()}
+                                    isInactiveWhen={currentPoster == poster_path}
+                                    styleButtonWithLabel={'Restore poster to default'}
+                                    style={{marginTop: 10}}
+                                />
                             </View>
                         ) : (
                             null
@@ -314,12 +310,11 @@ const Posters = ({ route, navigation}) => {
                                                     aspectRatio: posterClicked.aspect_ratio
                                                 }]}
                                             />
-                                            <Pressable
-                                            onPress={() => manageSelectedPoster(posterClicked)}
-                                                style={styles.btn}
-                                            >
-                                                <CustomText style={{ fontWeight: 'bold', textAlign: 'center' }}>Choose this poster</CustomText>
-                                            </Pressable>
+                                            <CustomPressable
+                                                onPress={() => manageSelectedPoster(posterClicked)}
+                                                styleButtonWithLabel={'Choose this poster'}
+                                                style={{marginTop: 10}}
+                                            />
                                         </View>
                                     ) : (
                                         null
@@ -397,15 +392,5 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: Theme.colors.secondary,
-    },
-
-    btn: {
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: Theme.colors.primaryDarker,
-        backgroundColor: Theme.colors.secondaryDarker,
-        marginTop: 10,
-        paddingHorizontal: 15,
-        paddingVertical: 5,
     }
 })
