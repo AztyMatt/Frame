@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     controlsBtn: {
         width: 10,
         height: 10,
-        borderRadius: '100%',
+        borderRadius: 100,
         marginRight: 10,
         backgroundColor: Theme.colors.primaryDarker,
     },

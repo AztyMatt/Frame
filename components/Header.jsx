@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         height: '100%',
         width: '100%',
-        borderRadius: '100%',
+        borderRadius: 100,
         backgroundColor: Theme.colors.secondaryDarker,
         opacity: 0.5
     },

@@ -137,31 +137,14 @@ const Movie = ({ route, navigation }) => {
     }
 
     const toggleOverview = () => {
-        if (expandedOverview) {
-            Animated.timing(animatedOverviewHeight, {
-                toValue: maxOverviewHeight,
-                duration: 300,
-                useNativeDriver: false,
-            }).start()
-
-            Animated.timing(animatedLinearGradientOpacity, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: false,
-            }).start()
-        } else {
-            Animated.timing(animatedOverviewHeight, {
-                toValue: overviewHeight,
-                duration: 300,
-                useNativeDriver: false,
-            }).start()
-
-            Animated.timing(animatedLinearGradientOpacity, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: false,
-            }).start()
-        }
+        const toValue = expandedOverview ? maxOverviewHeight : overviewHeight
+        const opacityValue = expandedOverview ? 1 : 0
+    
+        Animated.parallel([
+            Animated.timing(animatedOverviewHeight, { toValue, duration: 300, useNativeDriver: false }),
+            Animated.timing(animatedLinearGradientOpacity, { toValue: opacityValue, duration: 300, useNativeDriver: false }),
+        ]).start()
+    
         setExpandedOverview(!expandedOverview)
     }
 
@@ -277,6 +260,11 @@ const Movie = ({ route, navigation }) => {
     // Formatted Data -> Needs to be improved
     const formattedData = useMemo(() => {
         if (!data) return {}
+
+        /**
+         * Tests
+         */
+        setIsOverviewExpandable(data && data.overview ? true : false)
 
         /**
          * Generic formatting
@@ -420,7 +408,7 @@ const Movie = ({ route, navigation }) => {
 
     return (
         data ? (
-            <View>
+            <View style={{ flex: 1 }}>
                 <Header
                     navigation={navigation}
                     title={data.title}
@@ -493,8 +481,10 @@ const Movie = ({ route, navigation }) => {
                                         <View style={styles.details}>
                                             <View>
                                                 <View style={styles.directorContainer}>
-                                                    <CustomText>{ formattedData.releaseDate }</CustomText>
-                                                    <CustomText style={{ fontSize: 12.5}}> • DIRECTED BY</CustomText>
+                                                    {!isNaN(formattedData.releaseDate) &&
+                                                        <CustomText>{formattedData.releaseDate} • </CustomText>
+                                                    }
+                                                    <CustomText style={{ fontSize: 12.5}}>DIRECTED BY</CustomText>
                                                 </View>
 
                                                 <CustomText style={{ fontWeight: 'bold', fontSize: 16 }}>
@@ -515,12 +505,22 @@ const Movie = ({ route, navigation }) => {
                                                 />
 
                                                 <View style={styles.durationContainer}>
-                                                    <CustomText>{ formattedData.duration }</CustomText>
+                                                    {formattedData.duration !== '00h00' &&
+                                                        <CustomText>{ formattedData.duration }</CustomText>
+                                                    }
                                                 </View>
                                             </View>
                                         </View>
                                     </View>
 
+                                    <CustomPressable onPress={() => {openModal(modalPosterRef)}} isInactiveWhen={!data.poster_path} style={styles.poster}>
+                                        <CustomImage
+                                            source={{poster_path: data.poster_path, movieId: data.id}}
+                                            style={{width: '100%', height: '100%'}}
+                                            fallback={'poster'}
+                                            fallbackContent={data.title}
+                                        />
+                                    </CustomPressable>
                                     <CustomModal ref={modalPosterRef}
                                         navigation={navigation}
                                         content={
@@ -533,26 +533,11 @@ const Movie = ({ route, navigation }) => {
                                             >
                                                 <CustomImage
                                                     source={{poster_path: data.poster_path, movieId: data.id}}
-                                                    style={{
-                                                        width: screenWidth - 50,
-                                                        maxWidth: 360,
-                                                        aspectRatio: 0.667, // default aspect ratio
-                                                        borderRadius: 10,
-                                                        borderWidth: 1,
-                                                        borderColor: Theme.colors.secondary
-                                                    }}
+                                                    style={[styles.modalPoster, { width: screenWidth - 50 }]}
                                                 />
                                             </CustomPressable>
                                         }
                                     />
-                                    <CustomPressable onPress={() => {openModal(modalPosterRef)}} isInactiveWhen={!data.poster_path} style={styles.poster}>
-                                        <CustomImage
-                                            source={{poster_path: data.poster_path, movieId: data.id}}
-                                            style={{width: '100%', height: '100%'}}
-                                            fallback={'poster'}
-                                            fallbackContent={data.title}
-                                        />
-                                    </CustomPressable>
                                 </View>
                                 
                                 <Pressable onPress={isOverviewExpandable ? toggleOverview : null} style={styles.overviewExpandableContainer}>
@@ -925,6 +910,13 @@ const styles = StyleSheet.create({
         backgroundColor: Theme.colors.secondaryDarker,
         marginLeft: 10,
         overflow: 'hidden'
+    },
+    modalPoster: {
+        maxWidth: 360,
+        aspectRatio: 0.667, // default aspect ratio
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: Theme.colors.secondary
     },
 
     sectionContainer: {

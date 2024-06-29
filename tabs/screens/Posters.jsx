@@ -275,7 +275,7 @@ const Posters = ({ route, navigation}) => {
                     style={styles.flatListContainer}
                 >
                     {numberOfColumns ? (
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <FlatList
                                 ref={flatListRef}
                                 data={currentPosters}
