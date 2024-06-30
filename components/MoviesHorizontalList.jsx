@@ -7,11 +7,11 @@ const MoviesHorizontalList = ({ movies, navigation }) => {
     const scrollViewRef = useRef(null)
 
     // Reset
-    useEffect(() => {
-        return navigation.addListener('focus', () => {
-            scrollViewRef.current.scrollTo({ x: 0, animated: false })
-        })
-    }, [movies])
+    // useEffect(() => {
+    //     return navigation.addListener('focus', () => {
+    //         scrollViewRef.current.scrollTo({ x: 0, animated: false })
+    //     })
+    // }, [movies])
 
     return (
         <ScrollView ref={scrollViewRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>

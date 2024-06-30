@@ -73,6 +73,7 @@ const Posters = ({ route, navigation}) => {
     const handleLanguageChange = (language) => {
         setCurrentLanguage(language)
         modalLanguagesRef.current.closeModal()
+        flatListRef.current.scrollToIndex({ index: 0, animated: false })
     }
 
     handleRestore = async () => {
@@ -164,7 +165,7 @@ const Posters = ({ route, navigation}) => {
         return new Set(languagesFound.map(entry => entry.language))
     }, [data])
 
-    const currentPosters = useMemo(() => {
+    const postersForThisLanguage = useMemo(() => {
         if (!data) return {}
 
         return data.posters.filter(poster => poster.iso_639_1 === currentLanguage)
@@ -219,7 +220,7 @@ const Posters = ({ route, navigation}) => {
     )
 
     return (
-        currentPosters ? (
+        postersForThisLanguage ? (
             <>
                 <Header
                     navigation={navigation}
@@ -278,7 +279,7 @@ const Posters = ({ route, navigation}) => {
                         <View style={{ flex: 1 }}>
                             <FlatList
                                 ref={flatListRef}
-                                data={currentPosters}
+                                data={postersForThisLanguage}
                                 renderItem={Poster}
                                 keyExtractor={(item, index) => index.toString()}
                                 numColumns={numberOfColumns}

@@ -86,11 +86,11 @@ const Carousel = (
     }, [activeIndex])
 
     // Reset
-    useEffect(() => {
-        return navigation.addListener('focus', () => {
-            moveToIndex(isInfiniteScroll, false, isInfiniteScroll)
-        })
-    }, [items])
+    // useEffect(() => {
+    //     return navigation.addListener('focus', () => {
+    //         moveToIndex(isInfiniteScroll, false, isInfiniteScroll)
+    //     })
+    // }, [items])
 
     /**
      * JSX Fragments

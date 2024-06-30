@@ -27,6 +27,8 @@ const websites = {
     twitter_id: 'https://twitter.com/'
 }
 
+const maxOverviewHeight = 110
+
 const Movie = ({ route, navigation }) => {
     const { movieId } = route.params
 
@@ -45,7 +47,6 @@ const Movie = ({ route, navigation }) => {
     const [areMultiplesPosters, setAreMultiplesPosters] = useState(false)
 
     // Overview
-    const maxOverviewHeight = 110
     const [expandedOverview, setExpandedOverview] = useState(false)
     const [isOverviewExpandable, setIsOverviewExpandable] = useState(true)
     const [overviewHeight, setOverviewHeight] = useState(0)
@@ -150,7 +151,7 @@ const Movie = ({ route, navigation }) => {
 
     const setOverviewParams = () => { // -> Needs to be improved
         // console.log('overviewHeight :', overviewHeight)
-        if (overviewHeight > 0) {
+        if (overviewHeight > 0 && animatedOverviewHeight._value !== overviewHeight) {
             const isExpandable = overviewHeight > animatedOverviewHeight._value
             setIsOverviewExpandable(isExpandable)
             setExpandedOverview(!isExpandable)
@@ -227,9 +228,9 @@ const Movie = ({ route, navigation }) => {
                 // Reset
                 return navigation.addListener('focus', () => {
                     mainScrollViewRef.current.scrollTo({ y: 0, animated: false })
-                    animatedOverviewHeight.setValue(maxOverviewHeight)
-                    animatedLinearGradientOpacity.setValue(1)
-                    setSelectedTab('cast')
+                    // animatedOverviewHeight.setValue(maxOverviewHeight)
+                    // animatedLinearGradientOpacity.setValue(1)
+                    // setSelectedTab('cast')
                 })
             } catch (error) {
                 // console.error('Error during API call:', error.message) // To fix
@@ -559,7 +560,8 @@ const Movie = ({ route, navigation }) => {
                                     </Animated.View>
                                 </Pressable>
 
-                                {/* <CustomText>{JSON.stringify(data.id, null, 2)}</CustomText> */}
+                                {/* <CustomText>{JSON.stringify(isOverviewExpandable, null, 2)}</CustomText> */}
+                                {/* <CustomText>{JSON.stringify(expandedOverview, null, 2)}</CustomText> */}
 
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreContainer}>
                                     {data && data.genres.map((genre, index) => (
