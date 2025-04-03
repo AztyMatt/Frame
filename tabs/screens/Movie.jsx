@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { Dimensions, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useGlobal } from '../../GlobalContext'
 import { LinearGradient } from 'expo-linear-gradient'
 import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '../../utils.js'
 import Theme from '../../assets/styles.js'
@@ -39,6 +40,7 @@ const Movie = ({ route, navigation }) => {
     const [data, setData] = useState(null)
     const [onWatchlist, setOnWatchlist] = useState(false)
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width)
+    const global = useGlobal()
 
     // Header
     const HeaderScrollY = useState(new Animated.Value(0))[0]
@@ -270,7 +272,8 @@ const Movie = ({ route, navigation }) => {
         /**
          * Generic formatting
          */
-        const releaseDate = formatDateToYear(data.release_date)
+        const currentDate = global.currentDate.toISOString().split('T')[0]
+        const releaseYear = formatDateToYear(data.release_date)
         const duration = formatDuration(data.runtime)
         const note = formatNote(data.vote_average)
         const votes = formatThousands(data.vote_count)
@@ -285,6 +288,13 @@ const Movie = ({ route, navigation }) => {
             )
         }
         const trailer = formatTrailer()
+
+        // Release date
+        const formatDate = () => {
+            const releaseDate = new Date(data.release_date)
+            return `${releaseDate.getDate()} ${releaseDate.toLocaleString("en", { month: "long" })} ${releaseDate.getFullYear()}`
+        }
+        const releaseDate = formatDate()
 
         // Providers
         const formatProviders = () => {
@@ -392,12 +402,14 @@ const Movie = ({ route, navigation }) => {
 
         // Return
         return {
-            releaseDate,
+            currentDate,
+            releaseYear,
             duration,
             note,
             votes,
 
             trailer,
+            releaseDate,
             providers,
             director,
             figures,
@@ -482,8 +494,8 @@ const Movie = ({ route, navigation }) => {
                                         <View style={styles.details}>
                                             <View>
                                                 <View style={styles.directorContainer}>
-                                                    {!isNaN(formattedData.releaseDate) &&
-                                                        <CustomText>{formattedData.releaseDate} • </CustomText>
+                                                    {!isNaN(formattedData.releaseYear) &&
+                                                        <CustomText>{formattedData.releaseYear} • </CustomText>
                                                     }
                                                     <CustomText style={{ fontSize: 12.5}}>DIRECTED BY</CustomText>
                                                 </View>
@@ -572,110 +584,119 @@ const Movie = ({ route, navigation }) => {
                                 </ScrollView>
                             </View>
 
-                            <View style={styles.sectionContainer}>
-                                <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
-                                    <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
+                            { data.release_date <= formattedData.currentDate ? (
+                                <View style={styles.sectionContainer}>
+                                    <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
+                                        <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
 
-                                    {formattedData.providers ? (
-                                        <View style={styles.providerContainer}>
+                                        {formattedData.providers ? (
                                             <View style={styles.providerContainer}>
-                                                {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
-                                                    <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
-                                                        <CustomImage
-                                                            source={provider.logo_path}
-                                                            style={styles.provider}
-                                                            fallback={'provider'}
-                                                        />
+                                                <View style={styles.providerContainer}>
+                                                    {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
+                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
+                                                            <CustomImage
+                                                                source={provider.logo_path}
+                                                                style={styles.provider}
+                                                                fallback={'provider'}
+                                                            />
 
-                                                    </Pressable>
-                                                ))}
-                                            </View>
-
-                                            <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
-                                        </View>
-                                    ) : (
-                                        <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
-                                    )}
-                                </View>
-
-                                <View style={styles.section}>
-                                    <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
-
-                                    <View>
-                                        <View style={styles.reviewContainer}>
-                                            <View style={styles.reviewInfos}>
-                                                <View style={{ marginBottom: 7.5}}>
-                                                    <CustomText>
-                                                        {/* {'( '} */}
-                                                        <CustomText style={styles.reviewDetails}>{ formattedData.votes }</CustomText>
-                                                        {' ratings - '}
-                                                        <CustomText style={styles.reviewDetails}>{`${formattedData.note}/10 ★`}</CustomText>
-                                                        {/* {' )'} */}
-                                                    </CustomText>
+                                                        </Pressable>
+                                                    ))}
                                                 </View>
 
-                                                <View style={styles.ratingContainer}>
-                                                    <View style={styles.rating}>
-
-                                                        <View style={styles.ratingNumberContainer}>
-                                                            <CustomText style={styles.ratingNumber}>0</CustomText>
-                                                        </View>
-
-                                                        <View style={styles.ratingBarContainer}>
-                                                            <View style={[styles.ratingBar, {width: `${(formattedData.note / 10) * 100}%`}]}>
-                                                                <Text
-                                                                    aria-label=''
-                                                                    style={styles.ratingBarText}
-                                                                >
-                                                                    {Array(Math.ceil(screenWidth / 10)).fill('/').join('')} {/* Fills the screen regardless of the width */}
-                                                                </Text>
-                                                            </View>
-                                                        </View>
-
-                                                        <View style={styles.ratingNumberContainer}>
-                                                            <CustomText style={styles.ratingNumber}>10</CustomText>
-                                                        </View>
-
-                                                    </View>
-                                                </View>
+                                                <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
                                             </View>
-
-                                            <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
-                                                <CustomText style={{ fontWeight: 'bold'}}> Write a review </CustomText>
-
-                                                <Image
-                                                    style={styles.reviewImg}
-                                                    source={
-                                                        require('../../assets/icons/review.png')
-                                                    }
-                                                />
-                                            </Pressable>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View style={[styles.section, { paddingHorizontal: 0, marginTop: 10 }]}>
-                                    <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
-
-                                    <View>
-                                        {data.reviews.results && data.reviews.results.length > 0 ? (
-                                            <Carousel
-                                                navigation={navigation} 
-                                                items={data.reviews.results.map((review) => (
-                                                    <Review key={review.id} review={review} />
-                                                ))}
-                                                itemsVisible={10}
-                                                controls={true}
-                                                seeMore={'reviews'}
-                                                // slidePadding={15}
-                                                infiniteScroll={true}
-                                            />
                                         ) : (
-                                            <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
+                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
                                         )}
                                     </View>
+
+                                    <View style={styles.section}>
+                                        <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
+
+                                        <View>
+                                            <View style={styles.reviewContainer}>
+                                                <View style={styles.reviewInfos}>
+                                                    <View style={{ marginBottom: 7.5}}>
+                                                        <CustomText>
+                                                            {/* {'( '} */}
+                                                            <CustomText style={styles.reviewDetails}>{ formattedData.votes }</CustomText>
+                                                            {' ratings - '}
+                                                            <CustomText style={styles.reviewDetails}>{`${formattedData.note}/10 ★`}</CustomText>
+                                                            {/* {' )'} */}
+                                                        </CustomText>
+                                                    </View>
+
+                                                    <View style={styles.ratingContainer}>
+                                                        <View style={styles.rating}>
+
+                                                            <View style={styles.ratingNumberContainer}>
+                                                                <CustomText style={styles.ratingNumber}>0</CustomText>
+                                                            </View>
+
+                                                            <View style={styles.ratingBarContainer}>
+                                                                <View style={[styles.ratingBar, {width: `${(formattedData.note / 10) * 100}%`}]}>
+                                                                    <Text
+                                                                        aria-label=''
+                                                                        style={styles.ratingBarText}
+                                                                    >
+                                                                        {Array(Math.ceil(screenWidth / 10)).fill('/').join('')} {/* Fills the screen regardless of the width */}
+                                                                    </Text>
+                                                                </View>
+                                                            </View>
+
+                                                            <View style={styles.ratingNumberContainer}>
+                                                                <CustomText style={styles.ratingNumber}>10</CustomText>
+                                                            </View>
+
+                                                        </View>
+                                                    </View>
+                                                </View>
+
+                                                <Pressable onPress={() => navigation.navigate('WriteReview', { movieId: data.id })} style={styles.reviewBtn}>
+                                                    <CustomText style={{ fontWeight: 'bold'}}> Mark as watch </CustomText>
+
+                                                    <Image
+                                                        style={styles.reviewImg}
+                                                        source={
+                                                            require('../../assets/icons/review.png')
+                                                        }
+                                                    />
+                                                </Pressable>
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.section, { paddingHorizontal: 0, marginTop: 10 }]}>
+                                        <CustomText style={[styles.sectionTitle, { paddingHorizontal: 15 }]}>Reviews for this movie</CustomText>
+
+                                        <View>
+                                            {data.reviews.results && data.reviews.results.length > 0 ? (
+                                                <Carousel
+                                                    navigation={navigation} 
+                                                    items={data.reviews.results.map((review) => (
+                                                        <Review key={review.id} review={review} />
+                                                    ))}
+                                                    itemsVisible={10}
+                                                    controls={true}
+                                                    seeMore={'reviews'}
+                                                    // slidePadding={15}
+                                                    infiniteScroll={true}
+                                                />
+                                            ) : (
+                                                <CustomText style={{ color: Theme.colors.primaryDarker, paddingHorizontal: 15 }}>No reviews yet.</CustomText>
+                                            )}
+                                        </View>
+                                    </View>
                                 </View>
-                            </View>
+                            ) : (
+                                <View style={styles.sectionContainer}>
+                                    <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
+                                        <CustomText style={[styles.sectionTitle, {marginBottom: 0}]}>Release Date</CustomText>
+                                        <CustomText>{ formattedData.releaseDate }</CustomText>
+                                    </View>
+                                </View>
+                            )}
                             
                             <View style={{paddingHorizontal: 15}}>
                                 <View>

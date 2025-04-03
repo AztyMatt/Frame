@@ -5,8 +5,8 @@ import CustomText from './tags/CustomText'
 import CustomImage from './tags/CustomImage'
 
 const Figures = ({figures, figuresVisible, selectedTab}) => {
-    return (
-        figures && figures.slice(0, figuresVisible).map((figure, index) => (
+    return figures && figures.length > 0 ? (
+        figures.slice(0, figuresVisible).map((figure, index) => (
             figure ? (
                 <View key={index} style={styles.figureContainer}>
                     <View style={styles.figureInfos}>
@@ -36,6 +36,10 @@ const Figures = ({figures, figuresVisible, selectedTab}) => {
                 null
             )
         ))
+    ) : (
+        <View style={styles.emptyMessageContainer}>
+            <CustomText style={{color: Theme.colors.primaryDarker}}>No informations about the {selectedTab}.</CustomText>
+        </View>
     )
 }
 export default Figures
@@ -69,5 +73,12 @@ const styles = StyleSheet.create({
         width: 40,
         display: 'flex',
         alignItems: 'center'
+    },
+
+    emptyMessageContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center', 
+        height: '100%'
     }
 })
