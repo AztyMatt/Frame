@@ -8,13 +8,13 @@ import { api } from '../../services/api.js'
 
 const Research = () => {
     const navigation = useNavigation()
-    const [apiResult, setApiResult] = useState(null)
+    const [data, setData] = useState(null)
     const [query, setQuery] = useState('')
 
     const fetchData = async () => {
         try {
-            const result = await api(`/search/movie?query=${query}&include_adult=false&language=en-US&page=1`)
-            setApiResult(result)
+            const result = await api(`/search/movie?query=${query}&include_adult=false&language=en-US&page=1`) // Needs to be a language / country variable
+            setData(result)
         } catch (error) {
             // console.error('Error during API call:', error.message)
         }
@@ -48,9 +48,9 @@ const Research = () => {
                 />
             </View>
 
-            {apiResult ? (
+            {data ? (
                 <View>
-                    {apiResult.results.map((movie, index) => (
+                    {data.results.map((movie, index) => (
                         <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
                             <CustomImage
                                 source={{poster_path: movie.poster_path, movieId: movie.id}}
