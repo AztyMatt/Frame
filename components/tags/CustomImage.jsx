@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react'
-import { useFocusEffect } from '@react-navigation/native'
+import React, { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, Image, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useRouter } from 'expo-router'
 import { capitalizeFirstLetter } from '@/utils.js'
 import Theme from '@/assets/styles.js'
 import CustomText from './CustomText.jsx'
@@ -10,24 +10,26 @@ const throwError = (message) => { throw new Error(message) }
 
 const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) => {
     const [poster, setPoster] = useState(null)
+    const router = useRouter()
 
     const handlePosterCase = async () => {
         if (source && typeof source === 'object') {
             source.poster_path === undefined && throwError('poster_path is undefined, it is required if an object is provided as the source.')
             source.movieId === undefined && throwError('movieId is undefined, it is required if an object is provided as the source.')
 
-            // console.log(source)
-
             const customPoster = JSON.parse(await AsyncStorage.getItem(`@moviePoster-ID:${source.movieId}`))
             setPoster(customPoster ? customPoster.poster_path : source.poster_path)
         }
     }
 
-    useFocusEffect(
-        useCallback(() => {
+    // Effect to handle focus and trigger poster fetching logic
+    useEffect(() => {
+        const isFocused = router.pathname === '/[some-path]'  // Ajuste en fonction de la page spécifique
+
+        if (isFocused) {
             handlePosterCase()
-        }, [source])
-    )
+        }
+    }, [router.pathname, source]) // Assure que l'effet se déclenche sur les changements de `pathname` ou de `source`
 
     const fallbacks = {
         Default: (fallbackSource) => () => (
@@ -103,6 +105,7 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
         )
     )
 }
+
 export default CustomImage
 
 const styles = StyleSheet.create({

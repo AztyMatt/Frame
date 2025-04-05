@@ -7,7 +7,7 @@ import CustomImage from '@/components/tags/CustomImage.jsx'
 import { api } from '@/services/api.js'
 
 const Research = () => {
-    const navigation = useNavigation()
+    // const navigation = useNavigation()
     const [data, setData] = useState(null)
     const [query, setQuery] = useState('')
 
@@ -51,7 +51,7 @@ const Research = () => {
             {data ? (
                 <View>
                     {data.results.map((movie, index) => (
-                        <Pressable onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movie.id }})} key={index} style={styles.card}>
+                        <Pressable key={index} style={styles.card}>
                             <CustomImage
                                 source={{poster_path: movie.poster_path, movieId: movie.id}}
                                 style={styles.poster}

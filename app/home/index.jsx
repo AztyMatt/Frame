@@ -13,7 +13,7 @@ import MoviesHorizontalList from '@/components/MoviesHorizontalList.jsx'
 import { api } from '@/services/api.js'
 
 const Home = () => {
-    const navigation = useNavigation()
+    // const navigation = useNavigation()
     
     const [nowPlaying, setNowPlaying] = useState(null)
     const [upcoming, setUpcoming] = useState(null)
@@ -86,11 +86,11 @@ const Home = () => {
         fetchUpcoming()
     }, [])
 
-    useFocusEffect(
-        useCallback(() => {
-            getWatchlist()
-        }, [])
-    )
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         getWatchlist()
+    //     }, [])
+    // )
 
     return (
         <>
@@ -101,7 +101,7 @@ const Home = () => {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {firstUpcoming ? (
                     <Pressable 
-                        onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: firstUpcoming.id } })}
+                        // onPress={() => navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: firstUpcoming.id } })}
                         style={{ marginBottom: 5 }}
                     >
                         <View style={styles.bannerContainer}>
@@ -137,7 +137,7 @@ const Home = () => {
                     {nowPlaying ? (
                         <View style={{ marginVertical: 25 }}>
                             <CustomText style={styles.sectionTitle}>►  Currently in theatres</CustomText>
-                            <MoviesHorizontalList movies={nowPlaying.results} navigation={navigation}></MoviesHorizontalList>
+                            {/* <MoviesHorizontalList movies={nowPlaying.results} navigation={navigation}></MoviesHorizontalList> */}
                         </View>
                     ) : (
                         null // Future skeleton
@@ -149,14 +149,14 @@ const Home = () => {
 
                             <View style={{ marginVertical: 25 }}>
                                 <CustomText style={styles.sectionTitle}>►  Upcoming this month</CustomText>
-                                <MoviesHorizontalList movies={upcoming.results} navigation={navigation}></MoviesHorizontalList>
+                                {/* <MoviesHorizontalList movies={upcoming.results} navigation={navigation}></MoviesHorizontalList> */}
                             </View>
                         </View>
                     ) : (
                         null // Future skeleton
                     )}
 
-                    {watchlist && watchlist.length > 0 ? (
+                    {/* {watchlist && watchlist.length > 0 ? (
                         <View>
                             <View style={styles.sectionSeparator}></View>
 
@@ -167,7 +167,7 @@ const Home = () => {
                         </View>
                     ) : (
                         null // Future skeleton
-                    )}
+                    )} */}
                 </View>
     
             </ScrollView>
