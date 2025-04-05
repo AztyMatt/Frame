@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Pressable, TextInput } from 'react-native'
-import CustomText from '../../components/tags/CustomText.jsx'
-import CustomImage from '../../components/tags/CustomImage.jsx'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
 
-import { api } from '../../services/api.js'
+import { api } from '@/services/api.js'
 
 const Research = () => {
     const navigation = useNavigation()

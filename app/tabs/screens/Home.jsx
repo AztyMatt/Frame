@@ -2,15 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useGlobal } from '../../GlobalContext'
+import { useGlobal } from '@/GlobalContext'
 import { LinearGradient } from 'expo-linear-gradient'
-import { formatReleaseDate, handleTrailerLink } from '../../utils.js'
-import Theme from '../../assets/styles.js'
-import CustomText from '../../components/tags/CustomText.jsx'
-import CustomImage from '../../components/tags/CustomImage.jsx'
-import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
+import { formatReleaseDate, handleTrailerLink } from '@/utils.js'
+import Theme from '@/assets/styles.js'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
+import MoviesHorizontalList from '@/components/MoviesHorizontalList.jsx'
 
-import { api } from '../../services/api.js'
+import { api } from '@/services/api.js'
 
 const Home = () => {
     const navigation = useNavigation()

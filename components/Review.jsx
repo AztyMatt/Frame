@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react'
 import { StyleSheet, View, Pressable, Linking } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { capitalizeFirstLetter } from '../utils.js'
-import Theme from '../assets/styles.js'
+import { capitalizeFirstLetter } from '@/utils.js'
+import Theme from '@/assets/styles.js'
 import CustomText from './tags/CustomText.jsx'
 import CustomImage from './tags/CustomImage.jsx'
 
@@ -96,7 +96,7 @@ const Review = ({ review, displayPartialReview = true }) => {
                         source={formattedReview.author_details.avatar_path}
                         style={styles.authorAvatar}
                         fallback={'default'}
-                        fallbackContent={require('../assets/icons/figure.png')}
+                        fallbackContent={require('@/assets/icons/figure.png')}
                     />
 
                     <View style={styles.author}>

@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { StyleSheet, View, Pressable, ScrollView, FlatList } from 'react-native'
-import Theme from '../../assets/styles.js'
-import languages from '../../assets/languages.json'
-import CustomText from '../../components/tags/CustomText.jsx'
-import CustomImage from '../../components/tags/CustomImage.jsx'
-import CustomModal from '../../components/tags/CustomModal.jsx'
-import CustomPressable from '../../components/tags/CustomPressable'
-import Header from '../../components/Header.jsx'
+import Theme from '@/assets/styles.js'
+import languages from '@/assets/languages.json'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
+import CustomModal from '@/components/tags/CustomModal.jsx'
+import CustomPressable from '@/components/tags/CustomPressable'
+import Header from '@/components/Header.jsx'
 
-import { api } from '../../services/api.js'
+import { api } from '@/services/api.js'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 

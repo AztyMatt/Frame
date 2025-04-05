@@ -2,8 +2,8 @@ import React, { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, Image, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { capitalizeFirstLetter } from '../../utils.js'
-import Theme from '../../assets/styles.js'
+import { capitalizeFirstLetter } from '@/utils.js'
+import Theme from '@/assets/styles.js'
 import CustomText from './CustomText.jsx'
 
 const throwError = (message) => { throw new Error(message) }
@@ -39,7 +39,7 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
                 <Image
                     style={{width: '100%', height: '100%'}}
                     resizeMode={resizeMode}
-                    source={require('../../assets/poster.png')}
+                    source={require('@/assets/poster.png')}
                 />
                 <View style={[styles.center, { position: 'absolute', padding: 10 }]}>
                     <CustomText numberOfLines={2} ellipsizeMode='tail' style={{fontWeight: 'bold'}}>
@@ -60,12 +60,12 @@ const CustomImage = ({ source, style, resizeMode, fallback, fallbackContent }) =
                 <Image
                     style={{height: '100%', transform: [{ scaleX: -1 }]}}
                     resizeMode={resizeMode}
-                    source={require('../../assets/poster.png')}
+                    source={require('@/assets/poster.png')}
                 />
                 <Image
                     style={{height: '100%', transform: [{ scaleX: -1 }]}}
                     resizeMode={resizeMode}
-                    source={require('../../assets/poster.png')}
+                    source={require('@/assets/poster.png')}
                 />
                 <View style={{position: 'absolute', width: '100%', height: '100%', top: 0, right: 0, paddingHorizontal: 50}}>
                     <View style={{backgroundColor: Theme.colors.secondaryDarker, width: '100%', height: '100%'}}></View>

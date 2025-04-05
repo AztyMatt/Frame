@@ -2,23 +2,23 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { Dimensions, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useGlobal } from '../../GlobalContext'
+import { useGlobal } from '@/GlobalContext'
 import { LinearGradient } from 'expo-linear-gradient'
-import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '../../utils.js'
-import Theme from '../../assets/styles.js'
-import languages from '../../assets/languages.json'
-import CustomText from '../../components/tags/CustomText.jsx'
-import CustomImage from '../../components/tags/CustomImage.jsx'
-import CustomModal from '../../components/tags/CustomModal.jsx'
-import CustomPressable from '../../components/tags/CustomPressable'
-import Header from '../../components/Header.jsx'
-import Carousel from '../../components/Carousel.jsx'
-import Review from '../../components/Review.jsx'
-import Figures from '../../components/Figures.jsx'
-import Details from '../../components/Details.jsx'
-import MoviesHorizontalList from '../../components/MoviesHorizontalList.jsx'
+import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '@/utils.js'
+import Theme from '@/assets/styles.js'
+import languages from '@/assets/languages.json'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
+import CustomModal from '@/components/tags/CustomModal.jsx'
+import CustomPressable from '@/components/tags/CustomPressable'
+import Header from '@/components/Header.jsx'
+import Carousel from '@/components/Carousel.jsx'
+import Review from '@/components/Review.jsx'
+import Figures from '@/components/Figures.jsx'
+import Details from '@/components/Details.jsx'
+import MoviesHorizontalList from '@/components/MoviesHorizontalList.jsx'
 
-import { api } from '../../services/api.js'
+import { api } from '@/services/api.js'
 
 const websites = {
     imdb_id: 'https://www.imdb.com/title/',
@@ -433,8 +433,8 @@ const Movie = ({ route, navigation }) => {
                     additionalBtn={{
                         onPress: () => manageWatchlist(),
                         source: onWatchlist
-                            ? require('../../assets/icons/watchlist.png')
-                            : require('../../assets/icons/watchlistOff.png')
+                            ? require('@/assets/icons/watchlist.png')
+                            : require('@/assets/icons/watchlistOff.png')
                     }}
                 />
                 
@@ -659,7 +659,7 @@ const Movie = ({ route, navigation }) => {
                                                     <Image
                                                         style={styles.reviewImg}
                                                         source={
-                                                            require('../../assets/icons/review.png')
+                                                            require('@/assets/icons/review.png')
                                                         }
                                                     />
                                                 </Pressable>
