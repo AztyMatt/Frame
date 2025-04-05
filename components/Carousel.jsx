@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { StyleSheet, Dimensions, View, FlatList, Pressable } from 'react-native'
-import Theme from '../assets/styles.js'
+import Theme from '@/assets/styles.js'
 import CustomText from './tags/CustomText.jsx'
 import CustomPressable from './tags/CustomPressable.jsx'
 

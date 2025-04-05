@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, View, StyleSheet } from 'react-native'
-import Theme from '../../assets/styles.js'
+import Theme from '@/assets/styles.js'
 import CustomText from './CustomText.jsx'
 
 const CustomPressable = ({ isInactiveWhen, styleButtonWithLabel, children, style, ...props }) => {

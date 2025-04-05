@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, View, Image } from 'react-native'
-import Theme from '../assets/styles.js'
+import Theme from '@/assets/styles.js'
 import CustomText from './tags/CustomText'
 import CustomImage from './tags/CustomImage'
 
@@ -14,7 +14,7 @@ const Figures = ({figures, figuresVisible, selectedTab}) => {
                             source={figure.profile_path}
                             style={styles.figureImage}
                             fallback={'default'}
-                            fallbackContent={require('../assets/icons/figure.png')}
+                            fallbackContent={require('@/assets/icons/figure.png')}
                         />
 
                         <View style={{ flexShrink: 1 }}>

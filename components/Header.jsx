@@ -1,8 +1,8 @@
 import React from 'react'
 import { StyleSheet, View, Image, Pressable, Animated } from 'react-native'
-import Theme from '../assets/styles.js'
-import CustomText from '../components/tags/CustomText.jsx'
-import CustomPressable from '../components/tags/CustomPressable'
+import Theme from '@/assets/styles.js'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomPressable from '@/components/tags/CustomPressable'
 
 const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity = 1, additionalBtn = false }) => {
     const {onPress, isImage = true, source} = additionalBtn
@@ -19,7 +19,7 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
                 <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
                     <Image
                         style={styles.headerBtnImg}
-                        source={require('../assets/icons/back.png')}
+                        source={require('@/assets/icons/back.png')}
                     />
                     <View style={styles.headerBtnBackground}></View>
                 </Pressable>
