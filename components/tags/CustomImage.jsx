@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, Image, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useRouter } from 'expo-router'
 import { capitalizeFirstLetter } from '@/utils.js'
 import Theme from '@/assets/styles.js'
 import CustomText from './CustomText.jsx'
