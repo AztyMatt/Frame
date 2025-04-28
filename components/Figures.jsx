@@ -1,8 +1,8 @@
 import React from 'react'
 import { StyleSheet, View, Image } from 'react-native'
 import Theme from '@/assets/styles.js'
-import CustomText from './tags/CustomText'
-import CustomImage from './tags/CustomImage'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
 
 const Figures = ({figures, figuresVisible, selectedTab}) => {
     return figures && figures.length > 0 ? (

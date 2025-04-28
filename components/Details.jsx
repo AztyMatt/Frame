@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { formatThousands } from '@/utils.js'
 import Theme from '@/assets/styles.js'
-import CustomText from './tags/CustomText'
+import CustomText from '@/components/tags/CustomText.jsx'
 
 const Details = ({details}) => {
     const formatTitle = (title) => {

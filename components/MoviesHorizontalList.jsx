@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { StyleSheet, ScrollView, Pressable } from 'react-native'
 import Theme from '@/assets/styles.js'
-import CustomImage from './tags/CustomImage.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
 
 const MoviesHorizontalList = ({ movies, navigation }) => {
     const scrollViewRef = useRef(null)

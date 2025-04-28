@@ -3,8 +3,8 @@ import { StyleSheet, View, Pressable, Linking } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { capitalizeFirstLetter } from '@/utils.js'
 import Theme from '@/assets/styles.js'
-import CustomText from './tags/CustomText.jsx'
-import CustomImage from './tags/CustomImage.jsx'
+import CustomText from '@/components/tags/CustomText.jsx'
+import CustomImage from '@/components/tags/CustomImage.jsx'
 
 const Review = ({ review, displayPartialReview = true }) => {
 

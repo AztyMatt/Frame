@@ -4,7 +4,7 @@ import { StyleSheet, Image, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { capitalizeFirstLetter } from '@/utils.js'
 import Theme from '@/assets/styles.js'
-import CustomText from './CustomText.jsx'
+import CustomText from '@/components/tags/CustomText.jsx'
 
 const throwError = (message) => { throw new Error(message) }
 
