@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { StatusBar } from 'expo-status-bar' // Needed ?
 import { Dimensions, StyleSheet, View, ScrollView, Text, Image, Pressable, Linking, Animated } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useGlobal } from '@/GlobalContext'
+import useGlobalStore from '@/store/globalStore'
 import { LinearGradient } from 'expo-linear-gradient'
 import { removeLastWord, formatDateToYear, formatDuration, formatNote, formatThousands, handleTrailerLink } from '@/utils.js'
 import Theme from '@/assets/styles.js'
@@ -32,6 +32,10 @@ const maxOverviewHeight = 110
 
 const Movie = ({ route, navigation }) => {
     const { movieId } = route.params
+    const globalStore = {
+        currentDate: useGlobalStore(state => state.currentDate),
+        country: useGlobalStore(state => state.country)
+    }
 
     /**
      * useStates
@@ -40,7 +44,6 @@ const Movie = ({ route, navigation }) => {
     const [data, setData] = useState(null)
     const [onWatchlist, setOnWatchlist] = useState(false)
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width)
-    const global = useGlobal()
 
     // Header
     const HeaderScrollY = useState(new Animated.Value(0))[0]
@@ -221,10 +224,10 @@ const Movie = ({ route, navigation }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en`) //%2Crelease_dates
+                const result = await api(`/movie/${movieId}?append_to_response=videos%2Cwatch%2Fproviders%2Creviews%2Ccredits%2Csimilar%2Cexternal_ids&language=en`) // Needs to be a language / country variable
                 setData(result)
 
-                const resultImagesData = await api(`/movie/${movieId}/images?language=en`)
+                const resultImagesData = await api(`/movie/${movieId}/images?language=en`) // Needs to be a language / country variable
                 setAreMultiplesPosters(resultImagesData.posters.length > 1 ? true : false)
 
                 // Reset
@@ -272,7 +275,7 @@ const Movie = ({ route, navigation }) => {
         /**
          * Generic formatting
          */
-        const currentDate = global.currentDate.toISOString().split('T')[0]
+        const currentDateAsString = globalStore.currentDate.toISOString().split('T')[0]
         const releaseYear = formatDateToYear(data.release_date)
         const duration = formatDuration(data.runtime)
         const note = formatNote(data.vote_average)
@@ -292,18 +295,20 @@ const Movie = ({ route, navigation }) => {
         // Release date
         const formatDate = () => {
             const releaseDate = new Date(data.release_date)
-            return `${releaseDate.getDate()} ${releaseDate.toLocaleString("en", { month: "long" })} ${releaseDate.getFullYear()}`
+            return `${releaseDate.getDate()} ${releaseDate.toLocaleString("en", { month: "long" })} ${releaseDate.getFullYear()}` // Needs to be a language / country variable
         }
         const releaseDate = formatDate()
 
         // Providers
         const formatProviders = () => {
-            const providers = data['watch/providers'].results.US
+            const providers = data['watch/providers'].results[globalStore.country]
 
             return providers
-                ? providers.rent
-                    ? providers.rent
-                    : providers.buy
+                ? providers.flatrate
+                    ? providers.flatrate
+                    : providers.rent
+                        ? providers.rent
+                        : providers.buy
                 : null
         }
         const providers = formatProviders()
@@ -402,7 +407,7 @@ const Movie = ({ route, navigation }) => {
 
         // Return
         return {
-            currentDate,
+            currentDateAsString,
             releaseYear,
             duration,
             note,
@@ -584,32 +589,34 @@ const Movie = ({ route, navigation }) => {
                                 </ScrollView>
                             </View>
 
-                            { data.release_date <= formattedData.currentDate ? (
+                            { data.release_date <= formattedData.currentDateAsString ? (
                                 <View style={styles.sectionContainer}>
-                                    <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
-                                        <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
-
-                                        {formattedData.providers ? (
+                                    <CustomPressable 
+                                        onPress={() => navigation.navigate('Providers', { movieId: data.id, data: data['watch/providers'].results, screenWidth: screenWidth })}
+                                    >
+                                        <View style={[styles.section, { flexDirection: 'row', alignItems: 'center' }]}>
+                                            <CustomText style={[styles.sectionTitle, { marginBottom: 0 }]}>Where to watch ?</CustomText>
+                                            
                                             <View style={styles.providerContainer}>
-                                                <View style={styles.providerContainer}>
-                                                    {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
-                                                        <Pressable onPress={() => navigation.navigate('Providers', { movieId: data.id })} key={index} style={{ marginRight: 5 }}>
+                                                {formattedData.providers ? (
+                                                    <View style={styles.providerContainer}>
+                                                        {formattedData.providers && formattedData.providers.slice(0, 5).map((provider, index) => (
                                                             <CustomImage
+                                                                key={index}
                                                                 source={provider.logo_path}
                                                                 style={styles.provider}
                                                                 fallback={'provider'}
                                                             />
-
-                                                        </Pressable>
-                                                    ))}
-                                                </View>
+                                                        ))}
+                                                    </View>
+                                                ) : (
+                                                    <CustomText style={{color: Theme.colors.primaryDarker, marginRight: 2.5}}>Unavailable in your country.</CustomText> // Change to only show this when the movie is unavailable in every country + add a message if unavailable in current default country -> ex: 'Unavailable in US' (Add an option later to choose between based on location or default language)
+                                                )}
 
                                                 <CustomText style={{fontSize: 20, marginLeft: 5}}>➤</CustomText>
                                             </View>
-                                        ) : (
-                                            <CustomText style={{color: Theme.colors.primaryDarker}}>Currently unavailable.</CustomText>
-                                        )}
-                                    </View>
+                                        </View>
+                                    </CustomPressable>
 
                                     <View style={styles.section}>
                                         <CustomText style={styles.sectionTitle}>Ratings for this movie</CustomText>
@@ -802,7 +809,7 @@ const Movie = ({ route, navigation }) => {
                 </ScrollView>
             </View>
         ) : (
-            <CustomText>Chargement...</CustomText>
+            <CustomText>Loading...</CustomText>
         )
     )
 }
@@ -971,7 +978,8 @@ const styles = StyleSheet.create({
         width: 25,
         borderWidth: 1,
         borderColor: Theme.colors.primaryDarker,
-        borderRadius: 5
+        borderRadius: 5,
+        marginRight: 5
     },
 
     reviewContainer: {

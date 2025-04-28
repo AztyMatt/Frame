@@ -1,20 +1,20 @@
-import React from 'react'
+import React, { useState, useEffect, forwardRef } from 'react'
 import { StyleSheet, View, Image, Pressable, Animated } from 'react-native'
 import Theme from '@/assets/styles.js'
 import CustomText from '@/components/tags/CustomText.jsx'
-import CustomPressable from '@/components/tags/CustomPressable'
+import CustomPressable from '@/components/tags/CustomPressable.jsx'
 
-const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity = 1, additionalBtn = false }) => {
-    const {onPress, isImage = true, source} = additionalBtn
+const Header = forwardRef(({ navigation, title, absolute = false, titleOpacity = 1, opacity = 1, additionalBtn = false }, ref) => {
+    const {onPress, isImage = true, source, onSourceChange} = additionalBtn
+
+    const [currentSource, setCurrentSource] = useState(source)
+
+    useEffect(() => {
+        onSourceChange && onSourceChange(currentSource)
+    }, [currentSource])
 
     return (
-        <View style={[styles.headerContainer, absolute && {
-            flex: 1,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            pointerEvents: 'box-none',
-        }]}>
+        <View ref={ref} style={[styles.headerContainer, absolute && styles.headerContainerAbsolute ]}>
             <View style={styles.header}>
                 <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
                     <Image
@@ -37,7 +37,14 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
                                     source={source}
                                 />
                             ) : (
-                                <CustomText style={styles.headerBtnTxt}>{source}</CustomText>
+                                <CustomText style={styles.headerBtnTxt}>
+                                    {source 
+                                        ? typeof source === 'string' 
+                                            ? source.toUpperCase()
+                                            : source
+                                        : '•••'
+                                    }
+                                </CustomText>
                             )}
                             <View style={styles.headerBtnBackground}></View>
                         </>
@@ -50,7 +57,7 @@ const Header = ({ navigation, title, absolute = false, titleOpacity = 1, opacity
             <Animated.View style={[styles.headerBackground, { opacity: opacity }]}></Animated.View>
         </View>
     )
-}
+})
 export default Header
 
 const styles = StyleSheet.create({
@@ -58,6 +65,13 @@ const styles = StyleSheet.create({
         zIndex: 10,
         width: '100%',
         height: 55
+    },
+    headerContainerAbsolute: {
+        flex: 1,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        pointerEvents: 'box-none',
     },
     header: {
         zIndex: 11,

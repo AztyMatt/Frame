@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { StyleSheet, View, Pressable, ScrollView, FlatList } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import useGlobalStore from '@/store/globalStore'
+import { capitalizeFirstLetter } from '@/utils.js'
 import Theme from '@/assets/styles.js'
 import languages from '@/assets/languages.json'
 import CustomText from '@/components/tags/CustomText.jsx'
@@ -10,10 +13,11 @@ import Header from '@/components/Header.jsx'
 
 import { api } from '@/services/api.js'
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-
-const Posters = ({ route, navigation}) => {
+const Posters = ({ route, navigation }) => {
     const { movieId, poster_path, screenWidth } = route.params
+    const globalStore = {
+        language: useGlobalStore(state => state.language)
+    }
 
     /**
      * useStates
@@ -21,19 +25,19 @@ const Posters = ({ route, navigation}) => {
     const [data, setData] = useState(null)
     const [numberOfColumns, setNumberOfColumns] = useState(null)
     const [posterClicked, setPosterClicked] = useState(null)
-
     const [posterWidth, setPosterWidth] = useState(175)
     const [posterHorizontalMargins, setPosterHorizontalMargins] = useState(10)
     const [posterHorizontalBorders, setPosterHorizontalBorders] = useState(1)
     const [screenHorizontalPaddings, setScreenHorizontalPadding] = useState(20)
-
     const [currentPoster, setCurrentPoster] = useState(null)
-
-    const [currentLanguage, setCurrentLanguage] = useState('en') // Needs to be a parameter from .ENV
+    const [postersForThisLanguage, setPostersForThisLanguage] = useState(null)
+    const [currentLanguage, setCurrentLanguage] = useState(globalStore.language)
+    const [languagesTranslated, setLanguagesTranslated] = useState(null)
 
     /**
      * useRefs
      */
+    const headerRef = useRef(null)
     const flatListRef = useRef(null)
     const modalPosterRef = useRef(null)
     const modalLanguagesRef = useRef(null)
@@ -41,7 +45,7 @@ const Posters = ({ route, navigation}) => {
     /**
      * Functions
      */
-    const openModal = (item, ref) => { // !!! Check if he can be imported from CustomModal
+    const openModal = (item, ref) => {
         if (item) {
             setPosterClicked(item)
         }
@@ -73,13 +77,16 @@ const Posters = ({ route, navigation}) => {
     const handleLanguageChange = (language) => {
         setCurrentLanguage(language)
         modalLanguagesRef.current.closeModal()
-        flatListRef.current.scrollToIndex({ index: 0, animated: false })
+        if (flatListRef.current && postersForThisLanguage && postersForThisLanguage.length > 0) {
+            flatListRef.current.scrollToOffset({ offset: 0, animated: false }) // Needs to be handle differently (margin of the parent isn't)
+        }
     }
 
-    handleRestore = async () => {
+    const handleRestore = async () => {
         await AsyncStorage.removeItem(`@moviePoster-ID:${movieId}`)
         handleCurrentPoster()
-        setCurrentLanguage('en') // Needs to be a parameter from .ENV
+
+        setCurrentLanguage(globalStore.language)
         modalLanguagesRef.current.closeModal()
         navigation.navigate('MovieTab', { screen: 'Movie', params: { movieId: movieId } })
     }
@@ -111,9 +118,6 @@ const Posters = ({ route, navigation}) => {
             (posterHorizontalMargins + posterHorizontalBorders))
 
         setPosterWidth(newPosterWidth)
-
-        // console.log('newNumberOfColumns :', newNumberOfColumns)
-        // console.log('newPosterWidth :', newPosterWidth)
     }, [])
 
     useEffect(() => {
@@ -135,41 +139,100 @@ const Posters = ({ route, navigation}) => {
         handleCurrentPoster()
     }, [movieId])
 
+    useEffect(() => {
+        setCurrentLanguage(globalStore.language)
+        setLanguagesTranslated(null)
+    }, [globalStore.language])
+
+    useEffect(() => {
+        if (data) {
+            setPostersForThisLanguage(data.posters.filter(poster => poster.iso_639_1 === currentLanguage))
+        }
+    }, [currentLanguage, data])
+
     /**
-     * UseMemos
+     * useMemos
      */
-    const languagesFound = useMemo(() => {
-        if (!data) return new Set()
+    const formattedData = useMemo(() => {
+        if (!data) return {}
 
         const specialLanguage = {
             english_name: 'Others',
-            iso_639_1: null
+            iso_639_1: null,
         }
         const languagesFound = []
-    
+
         data.posters.forEach(poster => {
             const languageFound = languages.find(language => language.iso_639_1 === poster.iso_639_1) || specialLanguage
             const existingLanguage = languagesFound.find(entry => entry.language === languageFound)
-            
             existingLanguage
                 ? existingLanguage.count++
                 : languagesFound.push({ language: languageFound, count: 1 })
         })
-    
+
         languagesFound.sort((firstLanguage, secondLanguage) => {
             if (firstLanguage.language.iso_639_1 === null) return 1
             if (secondLanguage.language.iso_639_1 === null) return -1
             return secondLanguage.count - firstLanguage.count
         })
+
+        const formatLanguagesISO = () => {
+            const languagesISO = languagesFound.map(entry => entry.language.iso_639_1)
+
+            if (!languagesISO.includes(globalStore.language)) {
+                languagesISO.unshift(globalStore.language)
+            } else {
+                const currentIndex = languagesISO.indexOf(globalStore.language)
+                const [currentLanguageISO] = languagesISO.splice(currentIndex, 1)
+                languagesISO.unshift(currentLanguageISO)
+            }
+
+            return languagesISO
+        }
+
+        return { languagesISO: formatLanguagesISO() }
+    }, [data, globalStore.language])
+
+    /**
+     * useEffects 2
+     */
+    useEffect(() => {
+        const fetchAndSetLanguagesTranslated = async () => {
+            if (!formattedData.languagesISO) return {}
     
-        return new Set(languagesFound.map(entry => entry.language))
-    }, [data])
+            const names = {}
+    
+            try {
+                const response = await fetch(
+                    `https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/${globalStore.language}/languages.json`
+                )
+    
+                if (!response.ok) throw new Error('Failed to fetch language names')
+    
+                const data = await response.json()
+                const translations = data?.main?.[globalStore.language]?.localeDisplayNames?.languages || {}
+    
+                for (const languageISO of formattedData.languagesISO) {
+                    if (languageISO) {
+                        const translation = translations[languageISO]
 
-    const postersForThisLanguage = useMemo(() => {
-        if (!data) return {}
-
-        return data.posters.filter(poster => poster.iso_639_1 === currentLanguage)
-    }, [data, currentLanguage])
+                        names[languageISO] = translation
+                            ? translation
+                            : null
+                    }
+                }
+            } catch (error) {
+                for (const languageISO of formattedData.languagesISO) {
+                    if (languageISO) {
+                        names[languageISO] = null
+                    }
+                }
+            }
+    
+            setLanguagesTranslated(names)
+        }
+        fetchAndSetLanguagesTranslated()
+    }, [formattedData.languagesISO, globalStore.language])
 
     /**
      * JSX Fragments
@@ -178,13 +241,12 @@ const Posters = ({ route, navigation}) => {
         <View key={index} style={styles.posterContainer}>
             <CustomPressable
                 onPress={() => openModal(item, modalPosterRef)}
-                isInactiveWhen={currentPoster == item.file_path} 
+                isInactiveWhen={currentPoster == item.file_path}
                 style={[
                     styles.posterBtn,
                     {
                         borderWidth: posterHorizontalBorders / 2,
                         margin: posterHorizontalMargins / 2,
-
                         borderColor: Theme.colors[currentPoster === item.file_path ? 'secondaryDarker' : 'secondary']
                     }
                 ]}
@@ -195,13 +257,10 @@ const Posters = ({ route, navigation}) => {
                         {
                             width: posterWidth,
                             aspectRatio: item.aspect_ratio,
-                            opacity: currentPoster === item.file_path 
-                                ? 0.25
-                                : 0
+                            opacity: currentPoster === item.file_path ? 0.25 : 0
                         }
-                    ]}>
-                </View>
-
+                    ]}
+                />
                 <CustomImage
                     source={item.file_path}
                     style={[
@@ -219,131 +278,186 @@ const Posters = ({ route, navigation}) => {
         </View>
     )
 
-    return (
-        postersForThisLanguage ? (
-            <>
-                <Header
-                    navigation={navigation}
-                    title={'Posters'}
-                    additionalBtn={{
-                        onPress: () => openModal(null, modalLanguagesRef),
-                        isImage: false,
-                        source: currentLanguage ? currentLanguage.toUpperCase() : '•••'
-                    }}
-                />
+    const Language = (languageISO) => { 
+        if (!languageISO) {
+            return <CustomText>Others</CustomText>
+        }
 
-                <CustomModal ref={modalLanguagesRef}
-                    content={
-                        languagesFound ? (
-                            <View style={[
+        const languageTranslated = languagesTranslated[languageISO]
+        const languageInEnglish = languages.find(language => language.iso_639_1 === languageISO)?.english_name || 'Unknown'
+        const isTranslated = !(languageTranslated === null)
+
+        const hasLanguageToDisplay = isTranslated ? languageTranslated : languageInEnglish
+
+        return (
+            hasLanguageToDisplay ? (
+                <>
+                    <CustomText style={[currentLanguage === languageISO && { color: Theme.colors.primaryDarker }]}>
+                        {`${capitalizeFirstLetter(hasLanguageToDisplay)} (${languageISO.toUpperCase()})`}
+                    </CustomText>
+                    {!isTranslated && (
+                        <CustomText style={{ fontStyle: 'italic', color: Theme.colors.secondary }}>
+                            Untranslated
+                        </CustomText>
+                    )}
+                </>
+            ) : (
+                null
+            )
+        )
+    }
+
+    return data ? (
+        <>
+            <Header
+                ref={headerRef}
+                navigation={navigation}
+                title={'Posters'}
+                additionalBtn={{
+                    onPress: () => openModal(null, modalLanguagesRef),
+                    isImage: false,
+                    source: currentLanguage
+                }}
+            />
+
+            <CustomModal
+                ref={modalLanguagesRef}
+                content={
+                    formattedData.languagesISO ? (
+                        <View
+                            style={[
                                 styles.languagesContainer,
                                 {
                                     width: screenWidth - 50
                                 }
-                            ]}>
-                                <ScrollView
-                                    showsVerticalScrollIndicator={false}
-                                    contentContainerStyle={{ paddingTop: 7.5, paddingHorizontal: 15, paddingBottom: 17.5 }}
-                                    style={styles.languages}
-                                >
-                                    {Array.from(languagesFound).map((language, index) => (
-                                        <Pressable onPress={() => handleLanguageChange(language.iso_639_1)} key={index} style={styles.language}>
-                                            <CustomText>
-                                                {
-                                                    language && language.iso_639_1
-                                                        ? `${language.english_name} (${language.iso_639_1.toUpperCase()})`
-                                                        : language.english_name
-                                                }
-                                            </CustomText>
-                                        </Pressable>
-                                    ))}
-                                </ScrollView>
-
-                                <CustomPressable
-                                    onPress={() => handleRestore()}
-                                    isInactiveWhen={currentPoster == poster_path}
-                                    styleButtonWithLabel={'Restore poster to default'}
-                                    style={{marginTop: 10}}
-                                />
-                            </View>
-                        ) : (
-                            null
-                        )
-                    }
-                />
-
-                <View 
-                    style={styles.flatListContainer}
-                >
-                    {numberOfColumns ? (
-                        <View style={{ flex: 1 }}>
-                            <FlatList
-                                ref={flatListRef}
-                                data={postersForThisLanguage}
-                                renderItem={Poster}
-                                keyExtractor={(item, index) => index.toString()}
-                                numColumns={numberOfColumns}
+                            ]}
+                        >
+                            <ScrollView
                                 showsVerticalScrollIndicator={false}
-                                contentContainerStyle={{ 
-                                    paddingVertical: screenHorizontalPaddings / 2,
-                                    paddingHorizontal: screenHorizontalPaddings / 2,
+                                contentContainerStyle={{
+                                    flexGrow: 1,
+                                    paddingVertical: 5, 
+                                    paddingHorizontal: 15
                                 }}
-                                columnWrapperStyle={{ justifyContent: 'flex-start' }}
-                                style={{
-                                    width: (
-                                        (posterWidth + posterHorizontalMargins + posterHorizontalBorders)
-                                            *
-                                        numberOfColumns
-                                    )
-                                        +
-                                    screenHorizontalPaddings
-                                }}
-                            />
+                                style={styles.languages}
+                            >
+                                {languagesTranslated ? (
+                                    formattedData.languagesISO.map((languageISO, index) => (
+                                        <Pressable
+                                            onPress={() => handleLanguageChange(languageISO)}
+                                            key={index}
+                                            style={[
+                                                styles.language,
+                                                index === 0 && { marginBottom: 20 },
+                                                index === formattedData.languagesISO.length - 1 && { borderBottomWidth: 0 },
+                                            ]}
+                                        >
+                                            {Language(languageISO)}
+                                        </Pressable>
+                                    ))
+                                ) : (
+                                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                        <CustomText style={{ paddingVertical: 10 }}>Loading...</CustomText>
+                                    </View>
+                                )}
+                            </ScrollView>
 
-                            <CustomModal ref={modalPosterRef}
-                                content={
-                                    posterClicked ? (
-                                        <View>
-                                            <CustomImage
-                                                source={posterClicked.file_path}
-                                                style={[styles.posterClickedImg, {
-                                                    width: screenWidth - 50,
-                                                    aspectRatio: posterClicked.aspect_ratio
-                                                }]}
-                                            />
-                                            <CustomPressable
-                                                onPress={() => manageSelectedPoster(posterClicked)}
-                                                styleButtonWithLabel={'Choose this poster'}
-                                                style={{marginTop: 10}}
-                                            />
-                                        </View>
-                                    ) : (
-                                        null
-                                    )
-                                }
+                            <CustomPressable
+                                onPress={() => handleRestore()}
+                                isInactiveWhen={currentPoster == poster_path}
+                                styleButtonWithLabel={'Restore poster to default'}
+                                style={{ marginTop: 10 }}
                             />
                         </View>
-                    ) : (
-                        null
-                    )}
-                </View>
-            </>
-        ) : (
-            null
-        )
+                    ) : null
+                }
+            />
+
+            <View style={styles.flatListContainer}>
+                {numberOfColumns ? (
+                    <View style={{ flex: 1 }}>
+                        <FlatList
+                            ref={flatListRef}
+                            data={postersForThisLanguage}
+                            renderItem={Poster}
+                            ListEmptyComponent={
+                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                    <CustomText style={{color: Theme.colors.primaryDarker}}>No posters in your language.</CustomText>
+                                    <CustomPressable 
+                                        onPress={() => openModal(null, modalLanguagesRef)}
+                                        styleButtonWithLabel={`Check in other languages`}
+                                        style={{marginTop: 7.5}}
+                                    />
+                                </View>
+                            }
+                            keyExtractor={(item, index) => index.toString()}
+                            numColumns={numberOfColumns}
+                            showsVerticalScrollIndicator={false}
+                            scrollEnabled={postersForThisLanguage?.length > 0}
+                            contentContainerStyle={{
+                                paddingVertical: screenHorizontalPaddings / 2,
+                                paddingHorizontal: screenHorizontalPaddings / 2,
+                                ...(postersForThisLanguage?.length === 0 && { flex: 1 })
+                            }}
+                            columnWrapperStyle={{ justifyContent: 'flex-start' }}
+                            style={{
+                                width: (
+                                    (posterWidth + posterHorizontalMargins + posterHorizontalBorders)
+                                        *
+                                    numberOfColumns
+                                )
+                                    +
+                                screenHorizontalPaddings
+                            }}
+                        />
+
+                        <CustomModal
+                            ref={modalPosterRef}
+                            content={
+                                posterClicked ? (
+                                    <View>
+                                        <CustomImage
+                                            source={posterClicked.file_path}
+                                            style={[styles.posterClickedImg,
+                                                {
+                                                    width: screenWidth - 50,
+                                                    aspectRatio: posterClicked.aspect_ratio
+                                                }
+                                            ]}
+                                        />
+                                        <CustomPressable
+                                            onPress={() => manageSelectedPoster(posterClicked)}
+                                            styleButtonWithLabel={'Choose this poster'}
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    </View>
+                                ) : (
+                                    null
+                                )
+                            }
+                        />
+                    </View>
+                ) : (
+                    null
+                )}
+            </View>
+        </>
+    ) : (
+        null
     )
 }
+
 export default Posters
 
 const styles = StyleSheet.create({
     flatListContainer: {
-        flex: 1, 
+        flex: 1,
         width: '100%',
         display: 'flex',
         alignItems: 'center'
     },
 
-    posterContainer: { 
+    posterContainer: {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center'
