@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { StyleSheet, View, ScrollView, Text, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useGlobal } from '@/GlobalContext'
+import useGlobalStore from '@/store/globalStore'
 import { LinearGradient } from 'expo-linear-gradient'
 import { formatReleaseDate, handleTrailerLink } from '@/utils.js'
 import Theme from '@/assets/styles.js'
@@ -14,6 +14,9 @@ import { api } from '@/services/api.js'
 
 const Home = () => {
     const navigation = useNavigation()
+    const globalStore = {
+        currentDate: useGlobalStore(state => state.currentDate)
+    }
     
     const [nowPlaying, setNowPlaying] = useState(null)
     const [upcoming, setUpcoming] = useState(null)
@@ -21,12 +24,10 @@ const Home = () => {
     const [firstUpcoming, setFirstUpcoming] = useState(null)
     const [watchlist, setWatchlist] = useState([])
 
-    const global = useGlobal()
-
     const handleMainTrailerLink = (id) => {
         const fetchVideos = async () => {
             try {
-                const result = await api(`/movie/${id}/videos?language=en-US`) //%2Crelease_dates
+                const result = await api(`/movie/${id}/videos?language=en-US`) // Needs to be a language / country variable
                 const trailer = result.results.find(
                     video => video.type === 'Trailer'
                 )
@@ -54,7 +55,7 @@ const Home = () => {
     useEffect(() => {
         const fetchNowPlaying = async () => {
             try {
-                const result = await api('/movie/now_playing?language=en-US&page=1') //%2Crelease_dates
+                const result = await api('/movie/now_playing?language=en-US&page=1') // Needs to be a language / country variable
                 setNowPlaying(result)
             } catch (error) {
                 // console.error('Error during API call:', error.message)
@@ -63,7 +64,7 @@ const Home = () => {
         fetchNowPlaying()
 
         const fetchUpcoming = async () => {
-            const oneMonthLater = new Date(global.currentDate) // Maybe a better way
+            const oneMonthLater = new Date(globalStore.currentDate) // Maybe a better way
             oneMonthLater.setMonth(oneMonthLater.getMonth() + 1)
 
             try {
@@ -71,11 +72,11 @@ const Home = () => {
                     `/discover/movie?include_adult=false&include_video=false
                         &language=en-US
                         &page=1
-                        &primary_release_date.gte=${formatReleaseDate(global.currentDate)}
+                        &primary_release_date.gte=${formatReleaseDate(globalStore.currentDate)}
                         &primary_release_date.lte=${formatReleaseDate(oneMonthLater)}
                         &region=en
                         &sort_by=popularity.desc`
-                )
+                ) // Needs to be a language / country variable
                 setUpcoming(result)
 
                 setFirstUpcoming(result.results[0])

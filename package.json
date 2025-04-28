@@ -25,7 +25,8 @@
     "react-native-is-edge-to-edge": "^1.1.6",
     "react-native-outside-press": "^1.2.2",
     "react-native-web": "~0.19.13",
-    "reactotron-react-native": "^5.1.12"
+    "reactotron-react-native": "^5.1.12",
+    "zustand": "^5.0.3"
   },
   "private": true,
   "devDependencies": {

@@ -160,7 +160,6 @@ const Carousel = (
                             <CustomPressable
                                 onPress={() => console.log("Want to see more")}
                                 styleButtonWithLabel={`See more ${seeMore}`}
-                                style={styles.seeMoreBtn}
                             />
                         ) : (
                             null
